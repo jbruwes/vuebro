@@ -1,38 +1,41 @@
 <template lang="pug">
-.q-pa-md.row.q-gutter-md.items-start
-  q-card.w-full.max-w-96(
+.row.q-col-gutter-xs
+  .col-xs-12.col-sm-6.col-md-4.col-lg-3.col-xl-2(
     v-for="(image, i) in images",
-    :key="i",
-    bordered,
-    flat
+    :key="i"
   )
-    q-card-section(horizontal)
-      q-img.col(:ratio="16 / 9", :src="urls.get(image.url ?? '')", fit="cover")
-        .absolute-bottom
-          q-input(v-model="image.alt", dark, dense)
-      q-card-actions.q-px-md.justify-around(vertical)
-        q-btn(
-          flat,
-          icon="content_paste",
-          round,
-          :disable="!image.url",
-          @click="copy(i)"
+    q-card(bordered, flat)
+      q-card-section(horizontal)
+        q-img.col(
+          :ratio="16 / 9",
+          :src="urls.get(image.url ?? '')",
+          fit="cover"
         )
-          q-tooltip.bg-primary(
-            v-if="image.url",
-            anchor="center left",
-            self="center right"
-          ) {{ t("Copy Link") }}
-        q-btn(flat, icon="add", round, @click="add(i)")
-          q-tooltip.bg-primary(anchor="center left", self="center right") {{ t("Add Image") }}
-        q-btn(flat, icon="remove", round, @click="remove(i)")
-          q-tooltip.bg-primary(anchor="center left", self="center right") {{ t("Remove Image") }}
-        q-btn(flat, icon="arrow_left", round, @click="left(i)")
-          q-tooltip.bg-primary(anchor="center left", self="center right") {{ t("Image Left") }}
-        q-btn(flat, icon="arrow_right", round, @click="right(i)")
-          q-tooltip.bg-primary(anchor="center left", self="center right") {{ t("Image Right") }}
-        q-btn(flat, icon="upload", round, @click="upload(i)")
-          q-tooltip.bg-primary(anchor="center left", self="center right") {{ t("Upload Image") }}
+          .absolute-bottom
+            q-input(v-model="image.alt", dark, dense)
+        q-card-actions.q-px-md.justify-around(vertical)
+          q-btn(
+            flat,
+            icon="content_paste",
+            round,
+            :disable="!image.url",
+            @click="copy(i)"
+          )
+            q-tooltip.bg-primary(
+              v-if="image.url",
+              anchor="center left",
+              self="center right"
+            ) {{ t("Copy Link") }}
+          q-btn(flat, icon="add", round, @click="add(i)")
+            q-tooltip.bg-primary(anchor="center left", self="center right") {{ t("Add Image") }}
+          q-btn(flat, icon="remove", round, @click="remove(i)")
+            q-tooltip.bg-primary(anchor="center left", self="center right") {{ t("Remove Image") }}
+          q-btn(flat, icon="arrow_left", round, @click="left(i)")
+            q-tooltip.bg-primary(anchor="center left", self="center right") {{ t("Image Left") }}
+          q-btn(flat, icon="arrow_right", round, @click="right(i)")
+            q-tooltip.bg-primary(anchor="center left", self="center right") {{ t("Image Right") }}
+          q-btn(flat, icon="upload", round, @click="upload(i)")
+            q-tooltip.bg-primary(anchor="center left", self="center right") {{ t("Upload Image") }}
 </template>
 
 <script setup lang="ts">
