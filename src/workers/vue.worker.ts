@@ -1,4 +1,7 @@
-import type { WorkerLanguageService } from "@volar/monaco/worker";
+import type {
+  LanguageServicePlugin,
+  WorkerLanguageService,
+} from "@volar/monaco/worker";
 import type { VueCompilerOptions } from "@vue/language-core";
 import type { worker } from "monaco-editor";
 
@@ -57,7 +60,9 @@ self.onmessage = () => {
           ({ path }) => path,
         ),
       ],
-      languageServicePlugins: getFullLanguageServicePlugins(typescript),
+      languageServicePlugins: getFullLanguageServicePlugins(
+        typescript,
+      ) as LanguageServicePlugin[],
       setup: ({ project }) => {
         project.vue = { compilerOptions: vueCompilerOptions };
       },
