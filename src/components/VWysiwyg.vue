@@ -69,8 +69,8 @@ import Defaults from "app/uno.config";
 import mimes from "assets/mimes.json";
 import VChipsInputDialog from "components/dialogs/VChipsInputDialog.vue";
 import VLinkDialog from "components/dialogs/VLinkDialog.vue";
-import mime from "mime";
-import { uid, useQuasar } from "quasar";
+import { parse } from "path-browserify";
+import { useQuasar } from "quasar";
 import { fonts as Fonts, urls } from "stores/app";
 import {
   accept,
@@ -233,9 +233,10 @@ const emit = defineEmits(["update:modelValue"]),
     const message = t(
         "The graphic file type is not suitable for use on the web",
       ),
-      { type } = file;
+      { name, type } = file;
     if (mimes.includes(type)) {
-      const filePath = `images/${uid()}.${mime.getExtension(type) ?? ""}`;
+      const fileName = parse(name),
+        filePath = `images/${fileName.name}.${Math.random().toString(36).slice(2)}${fileName.ext}`;
       (async () => {
         await putObject(
           filePath,
