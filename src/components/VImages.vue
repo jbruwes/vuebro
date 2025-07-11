@@ -44,8 +44,8 @@ import type { TPage } from "@vuebro/shared";
 import { consoleError } from "@vuebro/shared";
 import { useFileDialog } from "@vueuse/core";
 import mimes from "assets/mimes.json";
-import mime from "mime";
-import { uid, useQuasar } from "quasar";
+import { parse } from "path-browserify";
+import { useQuasar } from "quasar";
 import { the, urls } from "stores/app";
 import {
   accept,
@@ -70,8 +70,7 @@ const { onChange, open } = useFileDialog({
   { t } = useI18n();
 
 const $q = useQuasar(),
-  images = ref([] as TPage["images"]),
-  message = t("The graphic file type is not suitable for use on the web");
+  images = ref([] as TPage["images"]);
 
 const add = (i: number) => {
     const alt = "",
@@ -153,9 +152,10 @@ onChange((files) => {
   if (files && image) {
     const [file] = files;
     if (file) {
-      const { type } = file;
+      const { name, type } = file;
       if (mimes.includes(type)) {
-        const filePath = `images/${uid()}.${mime.getExtension(type) ?? ""}`;
+        const fileName = parse(name),
+          filePath = `images/${fileName.name}.${Math.random().toString(36).slice(2)}${fileName.ext}`;
         (async () => {
           await putObject(
             filePath,
@@ -165,7 +165,12 @@ onChange((files) => {
         })().catch(consoleError);
         urls.set(filePath, URL.createObjectURL(file));
         image.url = filePath;
-      } else $q.notify({ message });
+      } else
+        $q.notify({
+          message: t(
+            "The graphic file type is not suitable for use on the web",
+          ),
+        });
     }
   }
 });
