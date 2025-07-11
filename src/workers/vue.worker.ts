@@ -62,9 +62,11 @@ self.onmessage = () => {
       ],
       languageServicePlugins: getFullLanguageServicePlugins(
         typescript,
-      ) as LanguageServicePlugin[],
+      ) as unknown as LanguageServicePlugin[],
       setup: ({ project }) => {
-        project.vue = { compilerOptions: vueCompilerOptions };
+        project.vue = {
+          compilerOptions: vueCompilerOptions as unknown as VueCompilerOptions,
+        };
       },
       typescript,
       uriConverter: {
