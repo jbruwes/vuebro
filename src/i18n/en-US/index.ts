@@ -57,5 +57,7 @@ export default Object.fromEntries(
     "The value is a module specifier map, which provides the mappings between module specifier text that might appear in an import statement or import() operator, and the text that will replace it when the specifier is resolved",
     "Internal Links",
     "Select a page to insert the corresponding link",
+    "News",
+    "Title must be not empty",
   ].map((key) => [key, key]),
 );
