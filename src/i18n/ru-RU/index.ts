@@ -80,4 +80,6 @@ export default Object.fromEntries([
     "Select a page to insert the corresponding link",
     "Выберите страницу, чтобы вставить соответствующую ссылку",
   ],
+  ["News", "Новости"],
+  ["Title must be not empty", "Title должен быть заполнен"],
 ]);
