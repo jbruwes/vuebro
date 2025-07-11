@@ -5,7 +5,14 @@ q-layout(view="hHh Lpr lff")
       q-toolbar-title
         q-avatar(icon="img:favicon.svg", size="xl")
         | VueBro
-      q-chip(v-if="bucket", icon="language", :label="bucket", :ripple="false")
+      q-chip.q-mr-md(
+        v-if="bucket",
+        icon="language",
+        :label="bucket",
+        :ripple="false"
+      )
+      q-separator(v-if="bucket", dark, vertical)
+      q-btn(v-if="bucket", stretch, flat, icon="newspaper", @click="clickFeed")
       q-btn-dropdown.q-mr-xs(
         v-if="bucket",
         dropdown-icon="apps",
@@ -22,7 +29,7 @@ q-layout(view="hHh Lpr lff")
           q-item(
             v-close-popup,
             clickable,
-            @click="() => { click(VFaviconDialog); }"
+            @click="$q.dialog({ component: VFaviconDialog })"
           )
             q-item-section(avatar)
               q-avatar(color="primary", icon="image", text-color="white")
@@ -60,10 +67,11 @@ q-layout(view="hHh Lpr lff")
 </template>
 
 <script setup lang="ts">
-import type { Component } from "vue";
+import type { TFeed } from "@vuebro/shared";
 
-import { consoleError, importmap } from "@vuebro/shared";
+import { consoleError, feed, importmap } from "@vuebro/shared";
 import VFaviconDialog from "components/dialogs/VFaviconDialog.vue";
+import VFeedDialog from "components/dialogs/VFeedDialog.vue";
 import VFontsDialog from "components/dialogs/VFontsDialog.vue";
 import VImportmapDialog from "components/dialogs/VImportmapDialog.vue";
 import { useQuasar } from "quasar";
@@ -76,9 +84,6 @@ import { useI18n } from "vue-i18n";
 
 const $q = useQuasar(),
   cancel = true,
-  click = (component: Component) => {
-    $q.dialog({ component });
-  },
   { t } = useI18n();
 
 const clickDomain = () => {
@@ -88,6 +93,7 @@ const clickDomain = () => {
       persistent,
       prompt: {
         isValid: (val) =>
+          !val ||
           /\b((?=[a-z0-9-]{1,63}\.)(xn--)?[a-z0-9]+(-[a-z0-9]+)*\.)+[a-z]{2,63}\b/.test(
             val,
           ),
@@ -96,6 +102,14 @@ const clickDomain = () => {
       title: t("Domain"),
     }).onOk((data: string) => {
       domain.value = data;
+    });
+  },
+  clickFeed = () => {
+    $q.dialog({
+      component: VFeedDialog,
+      componentProps: { feed, persistent: true },
+    }).onOk((data: TFeed["items"]) => {
+      feed.items = data.filter(({ title }) => title).reverse();
     });
   },
   clickFonts = () => {
