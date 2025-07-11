@@ -1,8 +1,17 @@
 import type { SFCDescriptor } from "@vue/compiler-sfc";
-import type { TImportmap, TPage } from "@vuebro/shared";
+import type { TFeed, TImportmap, TPage } from "@vuebro/shared";
 import type { Reactive, Ref } from "vue";
 
-import { atlas, consoleError, importmap, nodes, pages } from "@vuebro/shared";
+import {
+  atlas,
+  consoleError,
+  feed,
+  importmap,
+  nodes,
+  pages,
+} from "@vuebro/shared";
+import jsonfeedToAtom from "jsonfeed-to-atom";
+import jsonfeedToRSS from "jsonfeed-to-rss";
 import { editor, Uri } from "monaco-editor";
 import { debounce } from "quasar";
 import { cache, second, writable } from "stores/defaults";
@@ -141,6 +150,7 @@ ${value}
       [pages, importmap, domain],
       debounce(async (arr) => {
         const [page, imap] = arr as [TPage[], TImportmap, string],
+          [{ title = "" } = {}] = page,
           promises: Promise<void>[] = [];
         oldPages.forEach(({ loc, path }) => {
           if (loc && !page.find((value) => value.loc === loc))
@@ -158,7 +168,10 @@ ${value}
             `<base href="" />
     <script type="importmap">
 ${JSON.stringify(imap, null, 1)}
-    </script>`,
+    </script>
+    <link rel="alternate" title="${title}" type="application/feed+json" href="./feed.json" />
+    <link rel="alternate" title="${title}" type="application/atom+xml" href="./feed.xml" />
+    <link rel="alternate" title="${title}" type="application/rss+xml" href="./feed-rss.xml" />`,
           )
           .replace(
             "</head>",
@@ -406,6 +419,12 @@ watch(bucket, async (value) => {
       importmap.imports = imports;
     })().catch(consoleError);
     (async () => {
+      const { items } = JSON.parse(
+        (await getObjectText("feed.json", cache)) || "{}",
+      ) as TFeed;
+      feed.items = items;
+    })().catch(consoleError);
+    (async () => {
       {
         const [cname = ""] = (await getObjectText("CNAME", cache)).split(
           "\n",
@@ -511,6 +530,44 @@ watch(
         JSON.stringify({ imports }),
         "application/importmap+json",
       ).catch(consoleError);
+  }),
+  { deep: true },
+);
+
+watch(
+  [pages, feed, domain],
+  debounce((arr) => {
+    const [page, value, tld] = arr as [TPage[], TFeed, string],
+      [{ title } = {}] = page,
+      { items } = value;
+    const jsonfeed = {
+      items,
+      title,
+      version: "https://jsonfeed.org/version/1",
+    } as TFeed;
+    if (tld) {
+      jsonfeed.feed_url = `https://${tld}/feed.json`;
+      jsonfeed.home_page_url = `https://${tld}`;
+    }
+    putObject(
+      "feed.json",
+      JSON.stringify(jsonfeed),
+      "application/feed+json",
+    ).catch(consoleError);
+    if (title && tld) {
+      putObject(
+        "feed.xml",
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-call
+        jsonfeedToAtom(jsonfeed) as string,
+        "application/atom+xml",
+      ).catch(consoleError);
+      putObject(
+        "feed-rss.xml",
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-call
+        jsonfeedToRSS(jsonfeed) as string,
+        "application/rss+xml",
+      ).catch(consoleError);
+    }
   }),
   { deep: true },
 );
