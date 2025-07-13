@@ -74,6 +74,7 @@ import VFaviconDialog from "components/dialogs/VFaviconDialog.vue";
 import VFeedDialog from "components/dialogs/VFeedDialog.vue";
 import VFontsDialog from "components/dialogs/VFontsDialog.vue";
 import VImportmapDialog from "components/dialogs/VImportmapDialog.vue";
+import mime from "mime";
 import { useQuasar } from "quasar";
 import { domain, fonts, rightDrawer } from "stores/app";
 import { cache, persistent } from "stores/defaults";
@@ -109,7 +110,20 @@ const clickDomain = () => {
       component: VFeedDialog,
       componentProps: { feed, persistent: true },
     }).onOk((data: TFeed["items"]) => {
-      feed.items = data.filter(({ title }) => title).reverse();
+      feed.items = data
+        .filter(({ title }) => title)
+        .map((item) => {
+          const { attachments } = item;
+          item.attachments = attachments
+            .filter(({ url }) => url)
+            .map((attachment) => {
+              attachment.mime_type =
+                mime.getType(attachment.url) ?? "application/octet-stream";
+              return attachment;
+            });
+          return item;
+        })
+        .reverse();
     });
   },
   clickFonts = () => {
