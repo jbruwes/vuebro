@@ -21,7 +21,7 @@ q-dialog(ref="dialogRef", full-width, full-height, @hide="onDialogHide")
                 color="primary",
                 icon="add",
                 outline,
-                @click="rows.unshift({ id: uid(), date_published: new Date().toISOString(), content_html: '', url: '', title: '', image: '' })"
+                @click="rows.unshift({ attachments: [{ mime_type: '', url: '' }], content_html: '', date_published: new Date().toISOString(), id: uid(), title: '', url: '' })"
               )
               q-btn(
                 color="primary",
@@ -54,7 +54,7 @@ q-dialog(ref="dialogRef", full-width, full-height, @hide="onDialogHide")
                       q-checkbox(v-model="props.selected")
                 .q-table__grid-item-row
                   q-input(
-                    v-model="props.row.image",
+                    v-model="props.row.attachments[0].url",
                     filled,
                     label="Image",
                     type="url"
@@ -109,7 +109,7 @@ import { putObject } from "stores/io";
 import { ref, useTemplateRef } from "vue";
 import { useI18n } from "vue-i18n";
 
-let row: TFeed | undefined;
+let row: TFeed["items"][0] | undefined;
 
 const { dialogRef, onDialogCancel, onDialogHide, onDialogOK } =
     useDialogPluginComponent(),
@@ -126,14 +126,25 @@ const { dialogRef, onDialogCancel, onDialogHide, onDialogOK } =
 const $q = useQuasar(),
   filter = ref(""),
   formRef = useTemplateRef<QForm>("form"),
-  rows = ref([...items].reverse()),
+  rows = ref(
+    items
+      .map((item) => {
+        if (!item.attachments.length)
+          item.attachments.push({
+            mime_type: "",
+            url: "",
+          });
+        return item;
+      })
+      .reverse(),
+  ),
   selected = ref<TFeed["items"]>([]);
 
-const add = (value: TFeed) => {
+const add = (value: TFeed["items"][0]) => {
     row = value;
     open();
   },
-  clickLink = (feed: TFeed) => {
+  clickLink = (feed: TFeed["items"][0]) => {
     $q.dialog({
       component: VLinkDialog,
       componentProps: {
@@ -181,7 +192,8 @@ onChange((files) => {
             type,
           );
         })().catch(consoleError);
-        row.image = `https://${domain.value}/${filePath}`;
+        if (row.attachments[0])
+          row.attachments[0].url = `https://${domain.value}/${filePath}`;
       } else
         $q.notify({
           message: t(
