@@ -129,6 +129,7 @@ const $q = useQuasar(),
   rows = ref(
     items
       .map((item) => {
+        item.url ||= "";
         if (!item.attachments.length)
           item.attachments.push({
             mime_type: "",
