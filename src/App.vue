@@ -113,15 +113,18 @@ const clickDomain = () => {
       feed.items = data
         .filter(({ title }) => title)
         .map((item) => {
-          const { attachments } = item;
-          item.attachments = attachments
-            .filter(({ url }) => url)
-            .map((attachment) => {
-              attachment.mime_type =
-                mime.getType(attachment.url) ?? "application/octet-stream";
-              return attachment;
-            });
-          return item;
+          const { attachments, url, ...rest } = item;
+          return {
+            attachments: attachments
+              .filter(({ url }) => url)
+              .map((attachment) => {
+                attachment.mime_type =
+                  mime.getType(attachment.url) ?? "application/octet-stream";
+                return attachment;
+              }),
+            ...(url && { url }),
+            ...rest,
+          };
         })
         .reverse();
     });
