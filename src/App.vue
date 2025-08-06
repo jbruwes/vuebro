@@ -69,14 +69,14 @@ q-layout(view="hHh Lpr lff")
 <script setup lang="ts">
 import type { TFeed } from "@vuebro/shared";
 
-import { consoleError, feed, importmap } from "@vuebro/shared";
+import { consoleError, feed, fonts, importmap } from "@vuebro/shared";
 import VFaviconDialog from "components/dialogs/VFaviconDialog.vue";
 import VFeedDialog from "components/dialogs/VFeedDialog.vue";
 import VFontsDialog from "components/dialogs/VFontsDialog.vue";
 import VImportmapDialog from "components/dialogs/VImportmapDialog.vue";
 import mime from "mime";
 import { useQuasar } from "quasar";
-import { domain, fonts, rightDrawer } from "stores/app";
+import { domain, rightDrawer } from "stores/app";
 import { cache, persistent } from "stores/defaults";
 // eslint-disable-next-line import-x/no-unresolved
 import "virtual:uno.css";
