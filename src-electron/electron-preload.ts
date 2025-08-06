@@ -23,7 +23,7 @@ const deleteObject = async (Bucket: string, Key: string) => {
       const [body, mime] = await Promise.all([readFile(file), import("mime")]);
       const type = mime.default.getType(file);
       const headers = new Headers(type ? { "content-type": type } : undefined);
-      return new Response(body, { headers });
+      return new Response(body.buffer as ArrayBuffer, { headers });
     } catch {
       //
     }
