@@ -62,6 +62,7 @@ import initUnocssRuntime from "@unocss/runtime";
 import {
   consoleError,
   customFetch,
+  fonts as Fonts,
   getFontsObjectFromArray,
 } from "@vuebro/shared";
 import { useFileDialog } from "@vueuse/core";
@@ -71,7 +72,7 @@ import VChipsInputDialog from "components/dialogs/VChipsInputDialog.vue";
 import VLinkDialog from "components/dialogs/VLinkDialog.vue";
 import { parse } from "path-browserify";
 import { useQuasar } from "quasar";
-import { fonts as Fonts, urls } from "stores/app";
+import { urls } from "stores/app";
 import {
   accept,
   bypassDefined,
