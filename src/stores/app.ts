@@ -1,11 +1,12 @@
 import type { SFCDescriptor } from "@vue/compiler-sfc";
 import type { TFeed, TImportmap, TPage } from "@vuebro/shared";
-import type { Reactive, Ref } from "vue";
+import type { Ref } from "vue";
 
 import {
   atlas,
   consoleError,
   feed,
+  fonts,
   importmap,
   nodes,
   pages,
@@ -48,7 +49,6 @@ const deleted: Ref<TPage | undefined> = ref(),
       `assets/${key}.esm-browser.prod-${value}.js`,
     ]),
   ),
-  fonts: Reactive<string[]> = reactive([]),
   initJsonLD = `{
     "@context": "https://schema.org"
 }`,
@@ -612,4 +612,4 @@ watch(
 
 export type { TAppPage };
 
-export { deleted, domain, fonts, rightDrawer, selected, the, urls };
+export { deleted, domain, rightDrawer, selected, the, urls };
