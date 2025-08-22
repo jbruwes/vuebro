@@ -18,6 +18,7 @@ export default defineConfig(() => ({
         false,
       );
     },
+    target: { browser: ["es2022", "firefox115", "chrome115", "safari15"] },
     typescript: { strict: true, vueShim: true },
     vitePlugins: [
       [
