@@ -3,7 +3,7 @@ q-dialog(ref="dialogRef", full-width, full-height, @hide="onDialogHide")
   q-card.q-dialog-plugin.column
     q-card-section.q-dialog__title Import Map
     q-card-section.q-dialog__message {{ t("The value is a module specifier map, which provides the mappings between module specifier text that might appear in an import statement or import() operator, and the text that will replace it when the specifier is resolved") }}
-    q-card-section.q-dialog-plugin__form.scroll.col(horizontal)
+    q-card-section.q-dialog-plugin__form.col(horizontal)
       q-table.w-full(
         v-model:selected="selected",
         :columns,
@@ -11,70 +11,84 @@ q-dialog(ref="dialogRef", full-width, full-height, @hide="onDialogHide")
         :rows-per-page-options="[0]",
         dense,
         flat,
+        :filter,
         hide-bottom,
         row-key="id",
-        selection="multiple",
+        selection="single",
         separator="none"
       )
+        template(#top-left)
+          q-btn-group(outline)
+            q-btn(
+              color="primary",
+              icon="add",
+              outline,
+              @click="rows.push({ id: uid(), name: '', path: '' })"
+            )
+            q-btn(color="primary", icon="remove", outline, @click="removeRow")
+        template(#top-right)
+          q-input(
+            v-model="filter",
+            borderless,
+            debounce="300",
+            placeholder="Search"
+          )
+            template(#append)
+              q-icon(name="search")
         template(#body-selection="props")
           q-checkbox(
             v-model="props.selected",
-            :disable="['vue', 'vue-router'].includes(props.row.name)",
+            :disable="external.includes(props.row.name)",
             dense
           )
         template(#body-cell="props")
           q-td(:auto-width="props.col.name === 'name'", :props)
             q-input.min-w-max(
               v-model.trim="props.row[props.col.name]",
-              :disable="['vue', 'vue-router'].includes(props.row.name)",
+              :disable="external.includes(props.row.name)",
               dense,
               :autofocus="props.col.name === 'name'"
             )
-    q-card-actions(align="between")
-      q-btn-group(outline)
-        q-btn(
-          color="primary",
-          icon="add",
-          outline,
-          @click="rows.push({ id: uid(), name: '', path: '' })"
-        )
-        q-btn(color="primary", icon="remove", outline, @click="removeRow")
-      div
-        q-btn(
-          color="primary",
-          :label="t('Cancel')",
-          flat,
-          @click="onDialogCancel"
-        )
-        q-btn(
-          color="primary",
-          label="Ok",
-          flat,
-          @click="onDialogOK(Object.fromEntries(rows.filter(({ name, path }) => path && name).map(({ name, path }) => [name, path])))"
-        )
+    q-card-actions(align="right")
+      q-btn(
+        color="primary",
+        :label="t('Cancel')",
+        flat,
+        @click="onDialogCancel"
+      )
+      q-btn(
+        color="primary",
+        label="Ok",
+        flat,
+        @click="onDialogOK(Object.fromEntries(rows.filter(({ name, path }) => path && name).map(({ name, path }) => [name, path])))"
+      )
 </template>
 <script setup lang="ts">
 import type { QTableProps } from "quasar";
 
 import json from "assets/importmap.json";
 import { uid, useDialogPluginComponent, useQuasar } from "quasar";
+import { staticEntries } from "stores/app";
 import { ref } from "vue";
 import { useI18n } from "vue-i18n";
 
-const { dialogRef, onDialogCancel, onDialogHide, onDialogOK } =
+const external = staticEntries.map(([name]) => name),
+  filter = ref(""),
+  { dialogRef, onDialogCancel, onDialogHide, onDialogOK } =
     useDialogPluginComponent(),
   { importmap } = defineProps<{
     importmap: { imports: Record<string, string> };
   }>(),
-  {
-    imports: { vue, ["vue-router"]: vueRouter, ...imports },
-  } = importmap,
+  { imports } = importmap,
   { t } = useI18n();
 
 const $q = useQuasar(),
   columns = json as QTableProps["columns"],
   rows = ref(
-    Object.entries(imports).map(([name, path]) => ({
+    [
+      ...staticEntries,
+      ...Object.entries(imports).filter(([name]) => !external.includes(name)),
+    ].map(([name = "", path = ""]) => ({
       id: uid(),
       name,
       path,
@@ -96,8 +110,4 @@ const removeRow = () => {
 };
 
 defineEmits([...useDialogPluginComponent.emits]);
-
-if (vueRouter)
-  rows.value.unshift({ id: uid(), name: "vue-router", path: vueRouter });
-if (vue) rows.value.unshift({ id: uid(), name: "vue", path: vue });
 </script>
