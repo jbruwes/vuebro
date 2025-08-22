@@ -26,8 +26,7 @@ import {
   removeEmptyDirectories,
 } from "stores/io";
 import { toXML } from "to-xml";
-import { computed, reactive, ref, version, watch } from "vue";
-import { version as routerVersion } from "vue-router/package.json";
+import { computed, reactive, ref, watch } from "vue";
 import toString from "vue-sfc-descriptor-to-string";
 import { parse } from "vue/compiler-sfc";
 
@@ -40,18 +39,12 @@ type TAppPage = TPage & {
 
 const deleted: Ref<TPage | undefined> = ref(),
   domain = ref(""),
-  external = Object.fromEntries(
-    Object.entries({
-      vue: version,
-      "vue-router": routerVersion,
-    }).map(([key, value]) => [
-      key,
-      `assets/${key}.esm-browser.prod-${value}.js`,
-    ]),
-  ),
   initJsonLD = `{
     "@context": "https://schema.org"
 }`,
+  manifest = (await (
+    await fetch("runtime/.vite/manifest.json")
+  ).json()) as Record<string, Record<string, string>>,
   parser = new DOMParser(),
   prevImages: string[] = [],
   putPage = (async () => {
@@ -201,6 +194,9 @@ ${JSON.stringify(imap, null, 1)}
   rightDrawer = ref(false),
   routerLink = "router-link",
   selected: Ref<string | undefined> = ref(),
+  staticEntries = Object.values(manifest)
+    .filter(({ isStaticEntry }) => isStaticEntry)
+    .map(({ file, name }) => [name, file]),
   the = computed(
     () =>
       (atlas[selected.value ?? ""] ?? pages.value[0]) as TAppPage | undefined,
@@ -437,14 +433,10 @@ watch(bucket, async (value) => {
       });
     })().catch(consoleError);
     const [localManifest, serverManifest] = (
-      (await Promise.all([
-        (await fetch("runtime/.vite/manifest.json")).json(),
-        Promise.resolve(
-          JSON.parse(
-            (await getObjectText(".vite/manifest.json", cache)) || "{}",
-          ),
-        ),
-      ])) as Record<string, Record<string, string[]> | undefined>[]
+      [
+        manifest,
+        JSON.parse((await getObjectText(".vite/manifest.json", cache)) || "{}"),
+      ] as Record<string, Record<string, string[]> | undefined>[]
     ).map(
       (element) =>
         new Set(
@@ -455,7 +447,7 @@ watch(bucket, async (value) => {
         ),
     );
     if (localManifest && serverManifest) {
-      const files = [...Object.values(external), "robots.txt", "fonts.json"];
+      const files = ["robots.txt", "fonts.json"];
       (
         await Promise.allSettled(files.map((file) => headObject(file, cache)))
       ).forEach(({ status }, index) => {
@@ -518,7 +510,7 @@ watch(
   debounce((value, oldValue) => {
     const { imports } = value as TImportmap;
     let save = Boolean(oldValue);
-    Object.entries(external).forEach(([key, value]) => {
+    staticEntries.forEach(([key = "", value = ""]) => {
       if (imports[key] !== `./${value}`) {
         imports[key] = `./${value}`;
         save = true;
@@ -612,4 +604,4 @@ watch(
 
 export type { TAppPage };
 
-export { deleted, domain, rightDrawer, selected, the, urls };
+export { deleted, domain, rightDrawer, selected, staticEntries, the, urls };
