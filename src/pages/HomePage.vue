@@ -103,7 +103,7 @@ const $q = useQuasar(),
   // eslint-disable-next-line no-undef
   APP_VERSION = __APP_VERSION__,
   credential = useStorage(
-    "@",
+    "S3",
     () => {
       const value = {} as TCredentials;
       validateCredentials?.(value) as boolean;
