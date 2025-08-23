@@ -16,14 +16,10 @@ import { useStorage } from "@vueuse/core";
 import CryptoJS from "crypto-js";
 import { mergeDefaults } from "stores/defaults";
 
-/* -------------------------------------------------------------------------- */
-
 let s3Client: S3Client | undefined;
 
-/* -------------------------------------------------------------------------- */
-
 const credential = useStorage(
-    "@",
+    "S3",
     () => {
       const value = {} as TCredentials;
       validateCredentials?.(value) as boolean;
@@ -34,8 +30,6 @@ const credential = useStorage(
   ),
   removeEmptyDirectories = undefined,
   requestHandler = new FetchHttpHandler();
-
-/* -------------------------------------------------------------------------- */
 
 const setS3Client = (value?: S3Client) => {
   s3Client?.destroy();
@@ -124,8 +118,6 @@ const deleteObject = async (Bucket: string, Key: string) => {
       new PutObjectCommand({ Body, Bucket, ContentType, Key }),
     );
   };
-
-/* -------------------------------------------------------------------------- */
 
 export {
   credential,
