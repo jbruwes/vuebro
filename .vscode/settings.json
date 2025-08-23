@@ -8,5 +8,8 @@
   "cSpell.language": "en,ru",
   "typescript.tsdk": "node_modules/typescript/lib",
   "git.followTagsWhenSync": true,
-  "svg.preview.background": "transparent"
+  "svg.preview.background": "transparent",
+  "[vue]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  }
 }
