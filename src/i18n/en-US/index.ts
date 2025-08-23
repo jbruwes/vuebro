@@ -59,5 +59,7 @@ export default Object.fromEntries(
     "Select a page to insert the corresponding link",
     "News",
     "Title must be not empty",
+    "Get Mistral API Key",
+    "paste Mistral API Key only on a trusted computer",
   ].map((key) => [key, key]),
 );
