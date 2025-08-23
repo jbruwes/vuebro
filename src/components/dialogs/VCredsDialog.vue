@@ -1,7 +1,7 @@
 <template lang="pug">
 q-dialog(ref="dialogRef", @hide="onDialogHide")
   q-card.q-dialog-plugin
-    q-card-section.q-dialog-plugin__form
+    q-card-section.q-dialog-plugin__form.scroll
       q-input(
         ref="bucketRef",
         v-model.trim="Bucket",
