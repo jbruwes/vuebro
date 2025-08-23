@@ -151,7 +151,7 @@ q-page.column.full-height(v-if="the")
             q-spinner-hourglass
     q-tab-panel(name="vue")
       Suspense
-        v-source-code(:model="the.sfc")
+        v-source-code(:id="the.id", :model="the.sfc")
           template(#fallback)
             q-inner-loading(showing)
               q-spinner-hourglass
@@ -185,12 +185,8 @@ import { itemsPerPage, page } from "stores/defaults";
 import { computed, ref } from "vue";
 import { useI18n } from "vue-i18n";
 
-/* -------------------------------------------------------------------------- */
-
 const { icons } = mdi as Record<"icons", IconNameArray>,
   { t } = useI18n();
-
-/* -------------------------------------------------------------------------- */
 
 const filter = ref(""),
   icon = computed({
