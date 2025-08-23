@@ -1,49 +1,46 @@
 <template lang="pug">
-.size-full(ref="monaco")
+.size-full(ref="monacoRef")
 </template>
 
 <script setup lang="ts">
+import type { CompletionRegistration } from "monacopilot";
 import type { ThemeRegistrationRaw } from "shiki";
-import type { Ref } from "vue";
 
-import { editor } from "monaco-editor";
+import { useStorage } from "@vueuse/core";
+import * as monaco from "monaco-editor";
+import { CompletionCopilot, registerCompletion } from "monacopilot";
 import themeLight from "shiki/themes/light-plus.mjs";
-import { onBeforeUnmount, onMounted, ref, watch } from "vue";
+import { onBeforeUnmount, onMounted, useTemplateRef, watch } from "vue";
 
-/* -------------------------------------------------------------------------- */
-
-let editorInstance: editor.IStandaloneCodeEditor | undefined;
-
-/* -------------------------------------------------------------------------- */
+let completionRegistration: CompletionRegistration | null,
+  editor: monaco.editor.IStandaloneCodeEditor | null;
 
 const { name: theme = "light-plus" }: ThemeRegistrationRaw = themeLight;
 
-/* -------------------------------------------------------------------------- */
-
 const ambiguousCharacters = false,
+  apiKey = useStorage("AI", ""),
   automaticLayout = true,
   fixedOverflowWidgets = true,
   props = defineProps<{
-    model: Promise<editor.ITextModel>;
+    id?: string | undefined;
+    model: Promise<monaco.editor.ITextModel>;
   }>(),
   model = await props.model,
-  monaco: Ref<HTMLElement | undefined> = ref(),
+  monacoRef = useTemplateRef("monacoRef"),
   scrollBeyondLastLine = false,
   unicodeHighlight = { ambiguousCharacters };
-
-/* -------------------------------------------------------------------------- */
 
 watch(
   () => props.model,
   async (value) => {
-    editorInstance?.setModel(await value);
+    editor?.setModel(await value);
   },
 );
 
 onMounted(() => {
-  editorInstance =
-    monaco.value &&
-    editor.create(monaco.value, {
+  editor =
+    monacoRef.value &&
+    monaco.editor.create(monacoRef.value, {
       automaticLayout,
       fixedOverflowWidgets,
       model,
@@ -51,9 +48,31 @@ onMounted(() => {
       theme,
       unicodeHighlight,
     });
-  if (editorInstance) {
-    editorInstance.focus();
-    const { _themeService: themeService } = editorInstance as unknown as Record<
+  watch(
+    apiKey,
+    (key) => {
+      if (completionRegistration) {
+        completionRegistration.deregister();
+        completionRegistration = null;
+      }
+      if (key && editor) {
+        const copilot = new CompletionCopilot(key, {
+          model: "codestral",
+          provider: "mistral",
+        });
+        completionRegistration = registerCompletion(monaco, editor, {
+          filename: `${props.id ?? ""}.vue`,
+          language: "vue",
+          requestHandler: ({ body }) => copilot.complete({ body }),
+          technologies: ["tailwindcss"],
+        });
+      }
+    },
+    { immediate: true },
+  );
+  if (editor) {
+    editor.focus();
+    const { _themeService: themeService } = editor as unknown as Record<
       string,
       Record<string, Record<string, ((...args: never) => unknown) | boolean>>
     >;
@@ -85,6 +104,10 @@ onMounted(() => {
 });
 
 onBeforeUnmount(() => {
-  editorInstance?.dispose();
+  if (completionRegistration) {
+    completionRegistration.deregister();
+    completionRegistration = null;
+  }
+  editor?.dispose();
 });
 </script>
