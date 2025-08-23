@@ -50,6 +50,11 @@ q-layout(view="hHh Lpr lff")
               q-avatar(color="primary", icon="public", text-color="white")
             q-item-section
               q-item-label Domain
+          q-item(v-close-popup, clickable, @click="clickAI")
+            q-item-section(avatar)
+              q-avatar(color="primary", icon="smart_toy", text-color="white")
+            q-item-section
+              q-item-label AI
           q-item(v-close-popup, clickable, to="/")
             q-item-section(avatar)
               q-avatar(color="primary", icon="logout", text-color="white")
@@ -70,6 +75,7 @@ q-layout(view="hHh Lpr lff")
 import type { TFeed } from "@vuebro/shared";
 
 import { consoleError, feed, fonts, importmap } from "@vuebro/shared";
+import { useStorage } from "@vueuse/core";
 import VFaviconDialog from "components/dialogs/VFaviconDialog.vue";
 import VFeedDialog from "components/dialogs/VFeedDialog.vue";
 import VFontsDialog from "components/dialogs/VFontsDialog.vue";
@@ -77,17 +83,33 @@ import VImportmapDialog from "components/dialogs/VImportmapDialog.vue";
 import mime from "mime";
 import { useQuasar } from "quasar";
 import { domain, rightDrawer } from "stores/app";
-import { cache, persistent } from "stores/defaults";
 // eslint-disable-next-line import-x/no-unresolved
 import "virtual:uno.css";
+import { cache, persistent } from "stores/defaults";
 import { bucket, getObjectText, putObject } from "stores/io";
 import { useI18n } from "vue-i18n";
 
 const $q = useQuasar(),
+  ai = useStorage("AI", ""),
   cancel = true,
   { t } = useI18n();
 
-const clickDomain = () => {
+const clickAI = () => {
+    $q.dialog({
+      cancel,
+      html: true,
+      message: `${t("Get Mistral API Key")} at <a class="underline text-blue" href="https://console.mistral.ai/api-keys" target="_blank" rel="noreferrer">https://console.mistral.ai/api-keys</a>`,
+      persistent,
+      prompt: {
+        hint: t("paste Mistral API Key only on a trusted computer"),
+        model: ai.value,
+      },
+      title: "Mistral API Key",
+    }).onOk((data: string) => {
+      ai.value = data;
+    });
+  },
+  clickDomain = () => {
     $q.dialog({
       cancel,
       message: t("Enter a valid domain name:"),
