@@ -82,4 +82,9 @@ export default Object.fromEntries([
   ],
   ["News", "Новости"],
   ["Title must be not empty", "Title должен быть заполнен"],
+  ["Get Mistral API Key", "Получить Mistral API Key"],
+  [
+    "paste Mistral API Key only on a trusted computer",
+    "вводите Mistral API Key только на безопасном компьютере",
+  ],
 ]);
