@@ -12,8 +12,9 @@ import { CompletionCopilot, registerCompletion } from "monacopilot";
 import themeLight from "shiki/themes/light-plus.mjs";
 import { onBeforeUnmount, onMounted, useTemplateRef, watch } from "vue";
 
-let completionRegistration: CompletionRegistration | null,
-  editor: monaco.editor.IStandaloneCodeEditor | null;
+let action: monaco.IDisposable | null = null,
+  completion: CompletionRegistration | null = null,
+  editor: monaco.editor.IStandaloneCodeEditor | null = null;
 
 const { name: theme = "light-plus" }: ThemeRegistrationRaw = themeLight;
 
@@ -51,20 +52,32 @@ onMounted(() => {
   watch(
     apiKey,
     (key) => {
-      if (completionRegistration) {
-        completionRegistration.deregister();
-        completionRegistration = null;
-      }
+      action?.dispose();
+      completion?.deregister();
+      action = null;
+      completion = null;
       if (key && editor) {
         const copilot = new CompletionCopilot(key, {
           model: "codestral",
           provider: "mistral",
         });
-        completionRegistration = registerCompletion(monaco, editor, {
+        completion = registerCompletion(monaco, editor, {
           filename: `${props.id ?? ""}.vue`,
           language: "vue",
           requestHandler: ({ body }) => copilot.complete({ body }),
           technologies: ["tailwindcss"],
+          trigger: "onDemand",
+        });
+        action = monaco.editor.addEditorAction({
+          contextMenuGroupId: "navigation",
+          id: "monacopilot.triggerCompletion",
+          keybindings: [
+            monaco.KeyMod.CtrlCmd | monaco.KeyMod.Shift | monaco.KeyCode.Space,
+          ],
+          label: "Complete Code",
+          run: () => {
+            completion?.trigger();
+          },
         });
       }
     },
@@ -104,10 +117,8 @@ onMounted(() => {
 });
 
 onBeforeUnmount(() => {
-  if (completionRegistration) {
-    completionRegistration.deregister();
-    completionRegistration = null;
-  }
+  action?.dispose();
+  completion?.deregister();
   editor?.dispose();
 });
 </script>
