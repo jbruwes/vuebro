@@ -8,6 +8,7 @@ form.full-width.col.column(
 )
   q-editor.full-width.col.column(
     ref="editor",
+    paragraph-tag="p",
     :definitions,
     :dense="$q.screen.lt.md",
     :fonts,
