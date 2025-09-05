@@ -4,10 +4,12 @@ import { flatConfigs } from "eslint-plugin-import-x";
 import perfectionist from "eslint-plugin-perfectionist";
 import eslintPluginPrettierRecommended from "eslint-plugin-prettier/recommended";
 import pluginVue from "eslint-plugin-vue";
-import tseslint, { configs, parser } from "typescript-eslint";
+import { defineConfig } from "eslint/config";
+import { configs, parser } from "typescript-eslint";
 import vueParser from "vue-eslint-parser";
+
 const compat = new FlatCompat();
-export default tseslint.config(
+export default defineConfig(
   { ignores: ["**/dist", "**/.quasar", "**/language-configs.ts"] },
   {
     rules: {
@@ -36,6 +38,7 @@ export default tseslint.config(
   },
   ...compat.extends("plugin:vue-pug/vue3-recommended"),
   eslint.configs.recommended,
+  //@ts-expect-error Argument of type 'PluginFlatConfig' is not assignable to parameter of type 'InfiniteArray<ConfigWithExtends>'.
   flatConfigs.recommended,
   flatConfigs.typescript,
   configs.strictTypeChecked,
