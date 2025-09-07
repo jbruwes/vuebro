@@ -10,12 +10,16 @@ import type { worker } from "monaco-editor";
 import { Window } from "@remote-dom/polyfill";
 import { createNpmFileSystem } from "@volar/jsdelivr";
 import { createTypeScriptWorkerLanguageService } from "@volar/monaco/worker";
+// import {
+//   createVueLanguagePlugin,
+//   getDefaultCompilerOptions,
+//   VueVirtualCode,
+// } from "@vue/language-core";
 import {
   createVueLanguagePlugin,
   getDefaultCompilerOptions,
-  // VueVirtualCode,
-} from "@vue/language-core";
-import { getFullLanguageServicePlugins } from "@vue/language-service";
+  getFullLanguageServicePlugins,
+} from "@vue/language-service";
 // import { createVueLanguageServiceProxy } from "@vue/typescript-plugin/lib/common";
 // import { getComponentDirectives } from "@vue/typescript-plugin/lib/requests/getComponentDirectives";
 // import { getComponentEvents } from "@vue/typescript-plugin/lib/requests/getComponentEvents";
@@ -100,9 +104,11 @@ self.onmessage = () => {
       languageServicePlugins: getFullLanguageServicePlugins(
         typescript,
       ) as unknown as LanguageServicePlugin[],
-      // setup: ({ project }) => {
-      //   project.vue = { compilerOptions: vueCompilerOptions };
-      // },
+      setup: ({ project }) => {
+        project.vue = {
+          compilerOptions: vueCompilerOptions as unknown as VueCompilerOptions,
+        };
+      },
       typescript,
       uriConverter: { asFileName, asUri },
       workerContext,
