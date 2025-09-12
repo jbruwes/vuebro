@@ -22,7 +22,8 @@ import { getComponentProps } from "@vue/typescript-plugin/lib/requests/getCompon
 import { getComponentSlots } from "@vue/typescript-plugin/lib/requests/getComponentSlots";
 import { getElementAttrs } from "@vue/typescript-plugin/lib/requests/getElementAttrs";
 import { getElementNames } from "@vue/typescript-plugin/lib/requests/getElementNames";
-import { getPropertiesAtLocation } from "@vue/typescript-plugin/lib/requests/getPropertiesAtLocation";
+import { getReactiveReferences } from "@vue/typescript-plugin/lib/requests/getReactiveReferences";
+import { isRefAtPosition } from "@vue/typescript-plugin/lib/requests/isRefAtPosition";
 import { initialize } from "monaco-editor/esm/vs/editor/editor.worker";
 import typescript, { convertCompilerOptionsFromJson } from "typescript";
 import { create as createTypeScriptDirectiveCommentPlugin } from "volar-service-typescript/lib/plugins/directiveComment";
@@ -109,12 +110,11 @@ self.onmessage = () => {
       ) => WorkerLanguageService,
     ) => void
   )((workerContext) => {
-    const getProgram = () =>
-        (
-          getLanguageService().context.inject(
-            "typescript/languageService",
-          ) as typescript.LanguageService
-        ).getProgram(),
+    const getTypescriptLanguageService = () =>
+      getLanguageService().context.inject(
+        "typescript/languageService",
+      ) as typescript.LanguageService;
+    const getProgram = () => getTypescriptLanguageService().getProgram(),
       getVirtualCode = (fileName: string) => {
         const sourceScript = getLanguageService().context.language.scripts.get(
           asUri(fileName),
@@ -192,20 +192,6 @@ self.onmessage = () => {
             getImportPathForFile() {
               throw new Error("Not implemented");
             },
-            getPropertiesAtLocation(fileName, position) {
-              const program = getProgram(),
-                { sourceScript, virtualCode } = getVirtualCode(fileName);
-              if (program)
-                return getPropertiesAtLocation(
-                  typescript,
-                  getLanguageService().context.language,
-                  program,
-                  sourceScript,
-                  virtualCode,
-                  position,
-                  false,
-                );
-            },
             async getQuickInfoAtPosition(fileName, position) {
               const uri = asUri(fileName);
               const sourceScript =
@@ -231,6 +217,32 @@ self.onmessage = () => {
               } while (newText !== text);
               text = text.replace(/\n/g, " | ");
               return text;
+            },
+            getReactiveReferences(fileName, position) {
+              const program = getProgram(),
+                { sourceScript } = getVirtualCode(fileName);
+              if (program)
+                return getReactiveReferences(
+                  typescript,
+                  getLanguageService().context.language,
+                  getTypescriptLanguageService(),
+                  sourceScript,
+                  fileName,
+                  position,
+                );
+            },
+            isRefAtPosition(fileName, position) {
+              const program = getProgram(),
+                { sourceScript, virtualCode } = getVirtualCode(fileName);
+              if (program)
+                return isRefAtPosition(
+                  typescript,
+                  getLanguageService().context.language,
+                  program,
+                  sourceScript,
+                  virtualCode,
+                  position,
+                );
             },
           }).filter(
             (plugin) =>
