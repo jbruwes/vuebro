@@ -6,78 +6,70 @@
 import type { CompletionRegistration } from "monacopilot";
 import type { ThemeRegistrationRaw } from "shiki";
 
-import { useStorage } from "@vueuse/core";
 import * as monaco from "monaco-editor";
 import { CompletionCopilot, registerCompletion } from "monacopilot";
 import themeLight from "shiki/themes/light-plus.mjs";
 import { onBeforeUnmount, onMounted, useTemplateRef, watch } from "vue";
 
-let action: monaco.IDisposable | null = null,
-  completion: CompletionRegistration | null = null,
+let completion: CompletionRegistration | null = null,
   editor: monaco.editor.IStandaloneCodeEditor | null = null;
 
 const { name: theme = "light-plus" }: ThemeRegistrationRaw = themeLight;
 
 const ambiguousCharacters = false,
-  apiKey = useStorage("AI", ""),
   automaticLayout = true,
   fixedOverflowWidgets = true,
-  props = defineProps<{
-    id?: string | undefined;
-    model: Promise<monaco.editor.ITextModel>;
-  }>(),
-  model = await props.model,
   monacoRef = useTemplateRef("monacoRef"),
   scrollBeyondLastLine = false,
-  unicodeHighlight = { ambiguousCharacters };
+  unicodeHighlight = { ambiguousCharacters },
+  { apiKey, model, technologies } = defineProps<{
+    apiKey: string;
+    model: Promise<monaco.editor.ITextModel>;
+    technologies: string[];
+  }>();
 
 watch(
-  () => props.model,
+  () => model,
   async (value) => {
     editor?.setModel(await value);
   },
 );
 
-onMounted(() => {
+onMounted(async () => {
   editor =
     monacoRef.value &&
     monaco.editor.create(monacoRef.value, {
       automaticLayout,
       fixedOverflowWidgets,
-      model,
+      model: await model,
       scrollBeyondLastLine,
       theme,
       unicodeHighlight,
     });
   watch(
-    apiKey,
-    (key) => {
-      action?.dispose();
+    [() => apiKey, () => technologies],
+    async () => {
       completion?.deregister();
-      action = null;
       completion = null;
-      if (key && editor) {
-        const copilot = new CompletionCopilot(key, {
-          model: "codestral",
-          provider: "mistral",
-        });
+      if (apiKey && editor) {
+        const copilot = new CompletionCopilot(apiKey, {
+            model: "codestral",
+            provider: "mistral",
+          }),
+          {
+            uri: { path },
+          } = await model;
         completion = registerCompletion(monaco, editor, {
-          filename: `${props.id ?? ""}.vue`,
-          language: "vue",
-          requestHandler: ({ body }) => copilot.complete({ body }),
-          technologies: ["tailwindcss"],
-          trigger: "onDemand",
-        });
-        action = monaco.editor.addEditorAction({
-          contextMenuGroupId: "navigation",
-          id: "monacopilot.triggerCompletion",
-          keybindings: [
-            monaco.KeyMod.CtrlCmd | monaco.KeyMod.Shift | monaco.KeyCode.Space,
-          ],
-          label: "Complete Code",
-          run: () => {
-            completion?.trigger();
+          filename: path,
+          language: (await model).getLanguageId(),
+          requestHandler: async ({ body }) => {
+            try {
+              return await copilot.complete({ body });
+            } catch (error) {
+              return Promise.reject(error as Error);
+            }
           },
+          technologies,
         });
       }
     },
@@ -117,8 +109,9 @@ onMounted(() => {
 });
 
 onBeforeUnmount(() => {
-  action?.dispose();
   completion?.deregister();
+  completion = null;
   editor?.dispose();
+  editor = null;
 });
 </script>
