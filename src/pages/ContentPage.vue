@@ -151,13 +151,17 @@ q-page.column.full-height(v-if="the")
             q-spinner-hourglass
     q-tab-panel(name="vue")
       Suspense
-        v-source-code(:id="the.id", :model="the.sfc")
+        v-source-code(:model="the.sfc", :api-key, :technologies)
           template(#fallback)
             q-inner-loading(showing)
               q-spinner-hourglass
     q-tab-panel(name="jsonld")
       Suspense
-        v-source-code(:model="the.jsonld")
+        v-source-code(
+          :model="the.jsonld",
+          :api-key,
+          :technologies="['json-ld']"
+        )
           template(#fallback)
             q-inner-loading(showing)
               q-spinner-hourglass
@@ -173,7 +177,8 @@ import type { ValidationRule } from "quasar";
 
 import { Icon } from "@iconify/vue";
 import mdi from "@quasar/quasar-ui-qiconpicker/src/components/icon-set/mdi-v6";
-import { nodes, pages } from "@vuebro/shared";
+import { importmap, nodes, pages } from "@vuebro/shared";
+import { useStorage } from "@vueuse/core";
 import changefreq from "assets/changefreq.json";
 import types from "assets/types.json";
 import VImages from "components/VImages.vue";
@@ -185,8 +190,14 @@ import { itemsPerPage, page } from "stores/defaults";
 import { computed, ref } from "vue";
 import { useI18n } from "vue-i18n";
 
-const { icons } = mdi as Record<"icons", IconNameArray>,
+const apiKey = useStorage("AI", ""),
+  { icons } = mdi as Record<"icons", IconNameArray>,
   { t } = useI18n();
+
+const technologies = computed(() => [
+  "tailwindcss",
+  ...Object.keys(importmap.imports).filter((value) => value !== "vue"),
+]);
 
 const filter = ref(""),
   icon = computed({
