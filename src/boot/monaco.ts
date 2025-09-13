@@ -16,8 +16,6 @@ import TailwindcssWorker from "monaco-tailwindcss/tailwindcss.worker?worker";
 import { createHighlighterCoreSync } from "shiki/core";
 import { createJavaScriptRegexEngine } from "shiki/engine-javascript.mjs";
 import langJson from "shiki/langs/json.mjs";
-import langJsx from "shiki/langs/jsx.mjs";
-import langTsx from "shiki/langs/tsx.mjs";
 import langVue from "shiki/langs/vue.mjs";
 import themeDark from "shiki/themes/dark-plus.mjs";
 import themeLight from "shiki/themes/light-plus.mjs";
@@ -25,14 +23,6 @@ import themeLight from "shiki/themes/light-plus.mjs";
 import VueWorker from "src/workers/vue.worker?worker";
 import * as languageConfigs from "stores/language-configs";
 
-const getSyncUris = () => monaco.editor.getModels().map(({ uri }) => uri),
-  label = "vue",
-  languageId = ["vue", "javascript", "typescript", "css"],
-  worker: monaco.editor.MonacoWebWorker<WorkerLanguageService> =
-    monaco.editor.createWebWorker({
-      label,
-      moduleId: "vs/language/vue/vueWorker",
-    });
 window.MonacoEnvironment = {
   getWorker: (workerId: string, label: string) => {
     switch (label) {
@@ -47,31 +37,43 @@ window.MonacoEnvironment = {
     }
   },
 };
-["vue", "js", "ts", "css"].forEach((value, index) => {
-  const id = languageId[index];
-  if (id) {
-    const configuration = (
-        languageConfigs as Record<
-          string,
-          monaco.languages.LanguageConfiguration
-        >
-      )[value],
-      extensions = [`.${value}`];
-    if (configuration) {
-      monaco.languages.register({ extensions, id });
-      monaco.languages.setLanguageConfiguration(id, configuration);
-    }
-  }
+
+const getSyncUris = () => monaco.editor.getModels().map(({ uri }) => uri),
+  id = "vue",
+  worker: monaco.editor.MonacoWebWorker<WorkerLanguageService> =
+    monaco.editor.createWebWorker({
+      label: id,
+      moduleId: "vs/language/vue/vueWorker",
+    });
+
+monaco.languages.register({
+  aliases: [id],
+  extensions: [`.${id}`],
+  id,
 });
-void registerProviders(worker, languageId, getSyncUris, monaco.languages);
-activateMarkers(worker, languageId, label, getSyncUris, monaco.editor);
-activateAutoInsertion(worker, languageId, getSyncUris, monaco.editor);
+
+const languages = monaco.languages.getLanguages();
+
+Object.entries(languageConfigs).forEach(
+  ([alias, configuration]: [
+    string,
+    monaco.languages.LanguageConfiguration,
+  ]) => {
+    const { id } =
+      languages.find(({ aliases }) => aliases?.includes(alias)) ?? {};
+    if (id) monaco.languages.setLanguageConfiguration(id, configuration);
+  },
+);
+
+void registerProviders(worker, [id], getSyncUris, monaco.languages);
+activateMarkers(worker, [id], id, getSyncUris, monaco.editor);
+activateAutoInsertion(worker, [id], getSyncUris, monaco.editor);
 shikiToMonaco(
   createHighlighterCoreSync({
     engine: createJavaScriptRegexEngine(),
-    langs: [langVue, langTsx, langJsx, langJson],
+    langs: [langVue, langJson],
     themes: [themeDark, themeLight],
   }),
   monaco as typeof monacoNs,
 );
-configureMonacoTailwindcss(monaco, { languageSelector: label });
+configureMonacoTailwindcss(monaco, { languageSelector: id });
