@@ -62,13 +62,10 @@ onMounted(async () => {
         completion = registerCompletion(monaco, editor, {
           filename: path,
           language: (await model).getLanguageId(),
-          requestHandler: async ({ body }) => {
-            try {
-              return await copilot.complete({ body });
-            } catch (error) {
-              return Promise.reject(error as Error);
-            }
+          onError: () => {
+            // console.error(error);
           },
+          requestHandler: ({ body }) => copilot.complete({ body }),
           technologies,
         });
       }
