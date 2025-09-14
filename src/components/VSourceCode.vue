@@ -9,12 +9,11 @@ import type { ThemeRegistrationRaw } from "shiki";
 import * as monaco from "monaco-editor";
 import { CompletionCopilot, registerCompletion } from "monacopilot";
 import themeLight from "shiki/themes/light-plus.mjs";
+import { immediate } from "stores/defaults";
 import { onBeforeUnmount, onMounted, useTemplateRef, watch } from "vue";
 
 let completion: CompletionRegistration | null = null,
   editor: monaco.editor.IStandaloneCodeEditor | null = null;
-
-const { name: theme = "light-plus" }: ThemeRegistrationRaw = themeLight;
 
 const ambiguousCharacters = false,
   automaticLayout = true,
@@ -26,12 +25,13 @@ const ambiguousCharacters = false,
     apiKey: string;
     model: Promise<monaco.editor.ITextModel>;
     technologies: string[];
-  }>();
+  }>(),
+  { name: theme = "light-plus" }: ThemeRegistrationRaw = themeLight;
 
 watch(
   () => model,
-  async (value) => {
-    editor?.setModel(await value);
+  async () => {
+    editor?.setModel(await model);
   },
 );
 
@@ -73,7 +73,7 @@ onMounted(async () => {
         });
       }
     },
-    { immediate: true },
+    { immediate },
   );
   if (editor) {
     editor.focus();
