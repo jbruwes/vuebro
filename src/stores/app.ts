@@ -274,7 +274,9 @@ const cleaner = (value: TAppPage[]) => {
         await Promise.all(
           [...doc.images].map((image) => {
             const src = image.getAttribute("src");
-            return src && !urls.has(src) ? getObjectBlob(src) : undefined;
+            return src && !urls.has(src)
+              ? getObjectBlob(src)
+              : Promise.resolve(undefined);
           }),
         )
       ).forEach((image, index) => {
