@@ -11,8 +11,8 @@ import * as monaco from "monaco-editor";
 import EditorWorker from "monaco-editor/esm/vs/editor/editor.worker?worker";
 // eslint-disable-next-line import-x/default
 import JsonWorker from "monaco-editor/esm/vs/language/json/json.worker?worker";
-import { configureMonacoTailwindcss } from "monaco-tailwindcss";
-import TailwindcssWorker from "monaco-tailwindcss/tailwindcss.worker?worker";
+import { configureMonacoTailwindcss } from "monaco-tailwind";
+import TailwindWorker from "monaco-tailwind/tailwind.worker?worker";
 import { createHighlighterCoreSync } from "shiki/core";
 import { createJavaScriptRegexEngine } from "shiki/engine-javascript.mjs";
 import langJson from "shiki/langs/json.mjs";
@@ -29,7 +29,7 @@ window.MonacoEnvironment = {
       case "json":
         return new JsonWorker();
       case "tailwindcss":
-        return new TailwindcssWorker();
+        return new TailwindWorker();
       case "vue":
         return new VueWorker();
       default:
@@ -76,4 +76,4 @@ shikiToMonaco(
   }),
   monaco as typeof monacoNs,
 );
-configureMonacoTailwindcss(monaco, { languageSelector: id });
+configureMonacoTailwindcss(monaco, { languageSelector: [id] });
