@@ -22,7 +22,6 @@ import { getComponentProps } from "@vue/typescript-plugin/lib/requests/getCompon
 import { getComponentSlots } from "@vue/typescript-plugin/lib/requests/getComponentSlots";
 import { getElementAttrs } from "@vue/typescript-plugin/lib/requests/getElementAttrs";
 import { getElementNames } from "@vue/typescript-plugin/lib/requests/getElementNames";
-import { getReactiveReferences } from "@vue/typescript-plugin/lib/requests/getReactiveReferences";
 import { isRefAtPosition } from "@vue/typescript-plugin/lib/requests/isRefAtPosition";
 import { initialize } from "monaco-editor/esm/vs/editor/editor.worker";
 import typescript, { convertCompilerOptionsFromJson } from "typescript";
@@ -218,18 +217,8 @@ self.onmessage = () => {
               text = text.replace(/\n/g, " | ");
               return text;
             },
-            getReactiveReferences(fileName, position) {
-              const program = getProgram(),
-                { sourceScript } = getVirtualCode(fileName);
-              if (program)
-                return getReactiveReferences(
-                  typescript,
-                  getLanguageService().context.language,
-                  getTypescriptLanguageService(),
-                  sourceScript,
-                  fileName,
-                  position,
-                );
+            getReactiveReferences() {
+              throw new Error("Not implemented");
             },
             isRefAtPosition(fileName, position) {
               const program = getProgram(),
