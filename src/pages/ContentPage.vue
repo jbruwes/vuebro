@@ -1,5 +1,11 @@
 <template lang="pug">
-q-drawer(v-model="rightDrawer", bordered, show-if-above, side="right")
+q-drawer(
+  v-model="rightDrawer",
+  bordered,
+  show-if-above,
+  side="right",
+  :width="drawerWidth"
+)
   q-list(v-if="nodes && the")
     q-expansion-item(
       :label="t('Content Tree')",
@@ -128,6 +134,9 @@ q-drawer(v-model="rightDrawer", bordered, show-if-above, side="right")
                 dense,
                 tooltips
               )
+  .q-drawer__resizer.q-separator.q-separator--vertical(
+    v-touch-pan.preserveCursor.prevent.mouse.horizontal="resizeDrawer"
+  )
 q-page.column.full-height(v-if="the")
   q-tabs.text-grey(
     v-model="tab",
@@ -199,7 +208,10 @@ const technologies = computed(() => [
   ...Object.keys(importmap.imports).filter((value) => value !== "vue"),
 ]);
 
-const filter = ref(""),
+let initialDrawerWidth = 300;
+
+const drawerWidth = ref(initialDrawerWidth),
+  filter = ref(""),
   icon = computed({
     get() {
       return the.value?.icon?.replace(/^mdi:/, "mdi-");
@@ -218,6 +230,17 @@ const filter = ref(""),
     },
   }),
   pagination = ref({ itemsPerPage, page }),
+  resizeDrawer = ({
+    isFirst,
+    offset: { x },
+  }: {
+    isFirst: boolean;
+    offset: { x: number };
+  }) => {
+    if (isFirst) initialDrawerWidth = drawerWidth.value;
+    const width = initialDrawerWidth - x;
+    if (width > 300) drawerWidth.value = width;
+  },
   rules: ValidationRule[] = [
     (v) =>
       !(
@@ -234,3 +257,26 @@ const filter = ref(""),
   ],
   tab = ref("wysiwyg");
 </script>
+
+<style lang="css" scoped>
+.q-drawer__resizer {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: -1px;
+  cursor: ew-resize;
+}
+.q-drawer__resizer:after {
+  content: "∷";
+  position: absolute;
+  top: 50%;
+  height: 30px;
+  left: -5px;
+  right: -5px;
+  transform: translateY(-50%);
+  border-radius: 4px;
+  text-align: center;
+  padding-top: 3px;
+  background-color: silver;
+}
+</style>
