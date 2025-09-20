@@ -103,6 +103,7 @@ const clickAI = () => {
       prompt: {
         hint: t("paste Mistral API Key only on a trusted computer"),
         model: ai.value,
+        type: "password",
       },
       title: "Mistral API Key",
     }).onOk((data: string) => {
