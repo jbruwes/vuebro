@@ -177,6 +177,7 @@ q-drawer(
                 )
           q-input.q-ma-sm(
             v-model="message",
+            :label="t('How can I help you today?')",
             autogrow,
             dense,
             autofocus,
@@ -185,7 +186,12 @@ q-drawer(
             template(#prepend)
               q-icon.cursor-pointer(name="person")
                 q-tooltip {{ t("Describe AI behavior") }}
-                q-popup-edit(v-slot="scope", v-model="log.system", buttons)
+                q-popup-edit(
+                  v-slot="scope",
+                  v-model="log.system",
+                  buttons,
+                  anchor="bottom end"
+                )
                   q-input(
                     v-model="scope.value",
                     dense,
@@ -194,7 +200,14 @@ q-drawer(
                     :label="t('Describe AI behavior')"
                   )
             template(#after)
-              q-btn(round, dense, flat, icon="send", @click="send")
+              q-btn(
+                round,
+                dense,
+                flat,
+                icon="send",
+                :disable="!message",
+                @click="send"
+              )
         .self-center.text-center(v-else)
           q-btn(unelevated, color="primary", label="AI key", @click="clickAI")
           .q-mt-md {{ t("You need an AI key to use this feature") }}
