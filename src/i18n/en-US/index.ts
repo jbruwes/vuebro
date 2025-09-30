@@ -61,5 +61,7 @@ export default Object.fromEntries(
     "Title must be not empty",
     "Get Mistral API Key",
     "paste Mistral API Key only on a trusted computer",
+    "You need an AI key to use this feature",
+    "Describe AI behavior",
   ].map((key) => [key, key]),
 );
