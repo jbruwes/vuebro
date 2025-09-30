@@ -25,8 +25,9 @@ const autoIndent = "full";
 const allowImportingTsExtensions = true;
 const allowJs = true;
 const checkJs = true;
-
-/* -------------------------------------------------------------------------- */
+const once = true;
+const html = true;
+const deep = true;
 
 export {
   accept,
@@ -41,14 +42,17 @@ export {
   coerceTypes,
   configurable,
   controls,
+  deep,
   enumerable,
   esm,
   formatOnPaste,
   formatOnType,
+  html,
   immediate,
   itemsPerPage,
   mergeDefaults,
   multiple,
+  once,
   page,
   persistent,
   removeAdditional,
