@@ -63,5 +63,6 @@ export default Object.fromEntries(
     "paste Mistral API Key only on a trusted computer",
     "You need an AI key to use this feature",
     "Describe AI behavior",
+    "How can I help you today?",
   ].map((key) => [key, key]),
 );
