@@ -87,4 +87,9 @@ export default Object.fromEntries([
     "paste Mistral API Key only on a trusted computer",
     "вводите Mistral API Key только на безопасном компьютере",
   ],
+  [
+    "You need an AI key to use this feature",
+    "Для использования этой функции вам нужен AI ключ",
+  ],
+  ["Describe AI behavior", "Опишите поведение AI"],
 ]);
