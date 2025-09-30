@@ -18,7 +18,7 @@ let completion: CompletionRegistration | null = null,
 const ambiguousCharacters = false,
   automaticLayout = true,
   fixedOverflowWidgets = true,
-  monacoRef = useTemplateRef("monacoRef"),
+  monacoRef = useTemplateRef<HTMLElement>("monacoRef"),
   scrollBeyondLastLine = false,
   unicodeHighlight = { ambiguousCharacters },
   { apiKey, model, technologies } = defineProps<{
@@ -110,5 +110,17 @@ onBeforeUnmount(() => {
   completion = null;
   editor?.dispose();
   editor = null;
+});
+
+defineExpose({
+  getSelection: async () => {
+    const selection = editor?.getSelection() ?? null;
+    const value =
+      selection && !selection.isEmpty()
+        ? (await model).getValueInRange(selection)
+        : null;
+    editor?.trigger("editor", "cancelSelection", {});
+    return value;
+  },
 });
 </script>
