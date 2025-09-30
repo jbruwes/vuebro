@@ -90,7 +90,7 @@ import { bucket, getObjectText, putObject } from "stores/io";
 import { useI18n } from "vue-i18n";
 
 const $q = useQuasar(),
-  ai = useStorage("AI", ""),
+  ai = useStorage("apiKey", ""),
   cancel = true,
   { t } = useI18n();
 
