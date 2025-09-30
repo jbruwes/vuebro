@@ -17,9 +17,9 @@ q-drawer(
       q-tab(label="seo", name="seo")
       q-tab(label="ai", name="ai")
     q-separator
-    q-tab-panels.col(v-model="drawerTab")
+    q-tab-panels.col.fit(v-model="drawerTab")
       q-tab-panel.column.no-padding(name="seo")
-        q-list(v-if="nodes && the")
+        q-list.fit(v-if="nodes && the")
           q-expansion-item(
             :label="t('Content Tree')",
             default-opened,
@@ -359,7 +359,7 @@ const $q = useQuasar(),
       chatMessages.value?.[chatMessages.value.length - 1]?.$el as
         | HTMLElement
         | undefined
-    )?.scrollIntoView({ behavior: "smooth" });
+    )?.scrollIntoView();
   },
   tab = ref("wysiwyg"),
   technologies = computed(() => [
