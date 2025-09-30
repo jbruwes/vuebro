@@ -19,7 +19,7 @@ import { mergeDefaults } from "stores/defaults";
 let s3Client: S3Client | undefined;
 
 const credential = useStorage(
-    "S3",
+    "s3",
     () => {
       const value = {} as TCredentials;
       validateCredentials?.(value) as boolean;
