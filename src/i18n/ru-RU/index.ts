@@ -92,4 +92,5 @@ export default Object.fromEntries([
     "Для использования этой функции вам нужен AI ключ",
   ],
   ["Describe AI behavior", "Опишите поведение AI"],
+  ["How can I help you today?", "Чем могу помочь вам сегодня?"],
 ]);
