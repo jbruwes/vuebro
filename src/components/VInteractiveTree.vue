@@ -25,6 +25,7 @@ q-page-sticky(position="bottom-right", :offset="[18, 18]")
 .scroll.col
   q-tree.q-ma-xs(
     ref="qtree",
+    v-model:expanded="expanded",
     :nodes,
     :selected,
     no-selection-unset,
@@ -69,7 +70,7 @@ import {
 import { useQuasar } from "quasar";
 import { deleted, selected } from "stores/app";
 import { cancel, immediate, persistent } from "stores/defaults";
-import { computed, onMounted, ref, watch } from "vue";
+import { computed, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
 const { t } = useI18n();
 const $q = useQuasar(),
@@ -85,6 +86,7 @@ const $q = useQuasar(),
     (propNode: TPage) =>
       ["?", "\\", "#"].some((value) => propNode.name?.includes(value)),
   ],
+  expanded = ref([nodes[0]?.id]),
   message = t("Do you really want to delete?"),
   qtree = ref<QTree>(),
   state = ref(false),
@@ -175,10 +177,6 @@ watch(
   },
   { immediate },
 );
-onMounted(() => {
-  const [{ id } = {}] = nodes;
-  if (id) qtree.value?.setExpanded(id, true);
-});
 </script>
 <style scoped>
 .min-w-96 {
