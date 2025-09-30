@@ -17,7 +17,7 @@ q-drawer(
       q-tab(label="seo", name="seo")
       q-tab(label="ai", name="ai")
     q-separator
-    q-tab-panels.col.fit(v-model="drawerTab")
+    q-tab-panels.col.fit(v-model="drawerTab", keep-alive)
       q-tab-panel.column.no-padding(name="seo")
         q-list.fit(v-if="nodes && the")
           q-expansion-item(
