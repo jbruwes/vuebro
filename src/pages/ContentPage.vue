@@ -200,14 +200,7 @@ q-drawer(
                     :label="t('Describe AI behavior')"
                   )
             template(#after)
-              q-btn(
-                round,
-                dense,
-                flat,
-                icon="send",
-                :disable="!message",
-                @click="send"
-              )
+              q-btn(round, dense, flat, icon="send", @click="send")
         .self-center.text-center(v-else)
           q-btn(unelevated, color="primary", label="AI key", @click="clickAI")
           .q-mt-md {{ t("You need an AI key to use this feature") }}
@@ -454,38 +447,39 @@ watch(
 );
 
 async function send() {
-  if (!mistral || !log) return;
-  const content = [{ text: message.value, type: "text" }],
-    { messages, system } = log.value;
-  if (tab.value === "vue" && vueRef.value) {
-    const text = ((await vueRef.value.getSelection()) ?? "") as string;
-    if (text)
-      content.unshift({ text: `\`\`\`vue\n${text}\n\`\`\``, type: "text" });
-  }
-  if (tab.value === "jsonld" && jsonldRef.value) {
-    const text = ((await jsonldRef.value.getSelection()) ?? "") as string;
-    if (text)
-      content.unshift({ text: `\`\`\`json\n${text}\n\`\`\``, type: "text" });
-  }
-  messages.unshift({ content, role: "user" });
-  message.value = "";
-  if (messages.length > length) messages.length = length;
-  try {
-    const { text } = await generateText({
-      messages: messages.toReversed() as ModelMessage[],
-      model: wrapLanguageModel({
-        middleware: extractReasoningMiddleware({ tagName: "think" }),
-        model: mistral("magistral-medium-latest"),
-      }),
-      system,
-    });
-    messages.unshift({
-      content: [{ text, type: "text" }],
-      role: "assistant",
-    });
-  } catch (err) {
-    const { message } = err as Error;
-    $q.notify({ message });
+  if (mistral && log && message.value) {
+    const content = [{ text: message.value, type: "text" }],
+      { messages, system } = log.value;
+    if (tab.value === "vue" && vueRef.value) {
+      const text = ((await vueRef.value.getSelection()) ?? "") as string;
+      if (text)
+        content.unshift({ text: `\`\`\`vue\n${text}\n\`\`\``, type: "text" });
+    }
+    if (tab.value === "jsonld" && jsonldRef.value) {
+      const text = ((await jsonldRef.value.getSelection()) ?? "") as string;
+      if (text)
+        content.unshift({ text: `\`\`\`json\n${text}\n\`\`\``, type: "text" });
+    }
+    messages.unshift({ content, role: "user" });
+    message.value = "";
+    if (messages.length > length) messages.length = length;
+    try {
+      const { text } = await generateText({
+        messages: messages.toReversed() as ModelMessage[],
+        model: wrapLanguageModel({
+          middleware: extractReasoningMiddleware({ tagName: "think" }),
+          model: mistral("magistral-medium-latest"),
+        }),
+        system,
+      });
+      messages.unshift({
+        content: [{ text, type: "text" }],
+        role: "assistant",
+      });
+    } catch (err) {
+      const { message } = err as Error;
+      $q.notify({ message });
+    }
   }
 }
 </script>
