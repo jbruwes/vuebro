@@ -15,14 +15,7 @@ import jsonfeedToAtom from "jsonfeed-to-atom";
 import jsonfeedToRSS from "jsonfeed-to-rss";
 import { editor, Uri } from "monaco-editor";
 import { debounce } from "quasar";
-import { createHighlighterCoreSync } from "shiki/core";
 import { createJavaScriptRegexEngine } from "shiki/engine-javascript.mjs";
-import langJson from "shiki/langs/json.mjs";
-import langJsx from "shiki/langs/jsx.mjs";
-import langTsx from "shiki/langs/tsx.mjs";
-import langVue from "shiki/langs/vue.mjs";
-import themeDark from "shiki/themes/dark-plus.mjs";
-import themeLight from "shiki/themes/light-plus.mjs";
 import { cache, second, writable } from "stores/defaults";
 import {
   bucket,
@@ -47,11 +40,7 @@ type TAppPage = TPage & {
 
 const deleted: Ref<TPage | undefined> = ref(),
   domain = ref(""),
-  highlighter = createHighlighterCoreSync({
-    engine: createJavaScriptRegexEngine(),
-    langs: [langVue, langJson, langJsx, langTsx],
-    themes: [themeDark, themeLight],
-  }),
+  engine = createJavaScriptRegexEngine(),
   initJsonLD = `{
     "@context": "https://schema.org"
 }`,
@@ -622,7 +611,7 @@ export type { TAppPage };
 export {
   deleted,
   domain,
-  highlighter,
+  engine,
   rightDrawer,
   selected,
   staticEntries,
