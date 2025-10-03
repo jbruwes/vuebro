@@ -1,6 +1,6 @@
-import type { SFCDescriptor } from "@vue/compiler-sfc";
 import type { TFeed, TImportmap, TPage } from "@vuebro/shared";
 import type { Ref } from "vue";
+import type { SFCDescriptor } from "vue/compiler-sfc";
 
 import {
   atlas,
@@ -256,8 +256,7 @@ const cleaner = (value: TAppPage[]) => {
   },
   html = {
     async get(this: TAppPage) {
-      const filename = `${selected.value ?? "anonymous"}.vue`;
-      ({ descriptor } = parse((await this.sfc).getValue(), { filename }));
+      ({ descriptor } = parse((await this.sfc).getValue()));
       const { template } = descriptor;
       const { content } = template ?? {};
       const doc = getDocument(content ?? "");
