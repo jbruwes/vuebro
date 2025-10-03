@@ -456,7 +456,7 @@ else watch(id, initLog, { once });
 watch(
   apiKey,
   (value) => {
-    mistral = createMistral({ apiKey: value });
+    mistral = value ? createMistral({ apiKey: value }) : undefined;
   },
   { immediate },
 );
