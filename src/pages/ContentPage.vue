@@ -281,8 +281,18 @@ import dompurify from "dompurify";
 import { marked } from "marked";
 import markedShiki from "marked-shiki";
 import { useQuasar } from "quasar";
+import { createHighlighterCoreSync } from "shiki/core";
+import langHtml from "shiki/langs/html.mjs";
+import langJs from "shiki/langs/js.mjs";
+import langJson from "shiki/langs/json.mjs";
+import langJsx from "shiki/langs/jsx.mjs";
+import langTs from "shiki/langs/ts.mjs";
+import langTsx from "shiki/langs/tsx.mjs";
+import langVue from "shiki/langs/vue.mjs";
+import themeDark from "shiki/themes/dark-plus.mjs";
+import themeLight from "shiki/themes/light-plus.mjs";
 import VSourceCode from "src/components/VSourceCode.vue";
-import { highlighter, rightDrawer, the } from "stores/app";
+import { engine, rightDrawer, the } from "stores/app";
 import {
   cancel,
   deep,
@@ -315,6 +325,11 @@ const $q = useQuasar(),
   },
   drawerTab = ref("seo"),
   filter = ref(""),
+  highlighter = createHighlighterCoreSync({
+    engine,
+    langs: [langVue, langJson, langJsx, langTsx, langHtml, langJs, langTs],
+    themes: [themeDark, themeLight],
+  }),
   icon = computed({
     get() {
       return the.value?.icon?.replace(/^mdi:/, "mdi-");
