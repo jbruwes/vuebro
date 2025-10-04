@@ -67,7 +67,7 @@
     "@types/path-browserify": "^1.0.3",
     "@types/wicg-file-system-access": "^2023.10.7",
     "@vue/language-plugin-pug": "^3.1.0",
-    "@vuebro/runtime": "^1.1.54",
+    "@vuebro/runtime": "^1.1.55",
     "autoprefixer": "^10.4.21",
     "electron": "^38.2.1",
     "electron-builder": "^26.0.12",
