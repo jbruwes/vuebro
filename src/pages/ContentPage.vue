@@ -150,7 +150,7 @@ q-drawer(
                       tooltips
                     )
       q-tab-panel.column.no-padding.justify-center(name="ai")
-        .column.fit(v-if="apiKey && log", @vue:mounted="scrollToEnd")
+        .column.fit.no-wrap(v-if="apiKey && log", @vue:mounted="scrollToEnd")
           .scroll.q-pa-md.col.self-stretch
             q-chat-message(
               v-for="({ content, role }, i) in list",
@@ -181,6 +181,8 @@ q-drawer(
             autogrow,
             dense,
             autofocus,
+            class="max-h-1/3",
+            input-class="max-h-full",
             @keyup.ctrl.enter="send"
           )
             template(#prepend)
@@ -502,5 +504,8 @@ async function send() {
 <style scoped>
 :deep(pre) {
   white-space: break-spaces;
+}
+.q-textarea :deep(.q-field__control) {
+  height: 100% !important;
 }
 </style>
