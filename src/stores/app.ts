@@ -8,7 +8,6 @@ import jsonfeedToAtom from "jsonfeed-to-atom";
 import jsonfeedToRSS from "jsonfeed-to-rss";
 import { editor, Uri } from "monaco-editor";
 import { debounce } from "quasar";
-import { createJavaScriptRegexEngine } from "shiki/engine-javascript.mjs";
 import { cache, second, writable } from "stores/defaults";
 import {
   bucket,
@@ -33,7 +32,6 @@ type TAppPage = TPage & {
 
 const deleted: Ref<TPage | undefined> = ref(),
   domain = ref(""),
-  engine = createJavaScriptRegexEngine(),
   initJsonLD = `{
     "@context": "https://schema.org"
 }`,
@@ -600,13 +598,4 @@ watch(
 
 export type { TAppPage };
 
-export {
-  deleted,
-  domain,
-  engine,
-  rightDrawer,
-  selected,
-  staticEntries,
-  the,
-  urls,
-};
+export { deleted, domain, rightDrawer, selected, staticEntries, the, urls };

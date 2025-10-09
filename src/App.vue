@@ -68,7 +68,8 @@ q-layout(view="hHh Lpr lff")
         @click="rightDrawer = !rightDrawer"
       )
   q-page-container.window-height
-    router-view
+    Suspense
+      router-view
 </template>
 
 <script setup lang="ts">

@@ -13,14 +13,7 @@ import {
   defaultLanguageSelector,
 } from "monaco-tailwind";
 import TailwindWorker from "monaco-tailwind/tailwind.worker?worker";
-import { createHighlighterCoreSync } from "shiki/core";
-import langJson from "shiki/langs/json.mjs";
-import langJsx from "shiki/langs/jsx.mjs";
-import langTsx from "shiki/langs/tsx.mjs";
-import langVue from "shiki/langs/vue.mjs";
-import themeDark from "shiki/themes/dark-plus.mjs";
-import themeLight from "shiki/themes/light-plus.mjs";
-import { engine } from "src/stores/app";
+import { createHighlighter } from "shiki";
 
 window.MonacoEnvironment = {
   getWorker: (workerId: string, label: string) => {
@@ -43,10 +36,9 @@ configureMonacoTailwindcss(monaco, {
 });
 
 shikiToMonaco(
-  createHighlighterCoreSync({
-    engine,
-    langs: [langVue, langJson, langJsx, langTsx],
-    themes: [themeDark, themeLight],
+  await createHighlighter({
+    langs: ["vue", "json", "jsx", "tsx"],
+    themes: ["dark-plus", "light-plus"],
   }),
   monaco as typeof monacoNs,
 );

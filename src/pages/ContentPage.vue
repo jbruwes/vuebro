@@ -283,18 +283,9 @@ import dompurify from "dompurify";
 import { marked } from "marked";
 import markedShiki from "marked-shiki";
 import { useQuasar } from "quasar";
-import { createHighlighterCoreSync } from "shiki/core";
-import langHtml from "shiki/langs/html.mjs";
-import langJs from "shiki/langs/js.mjs";
-import langJson from "shiki/langs/json.mjs";
-import langJsx from "shiki/langs/jsx.mjs";
-import langTs from "shiki/langs/ts.mjs";
-import langTsx from "shiki/langs/tsx.mjs";
-import langVue from "shiki/langs/vue.mjs";
-import themeDark from "shiki/themes/dark-plus.mjs";
-import themeLight from "shiki/themes/light-plus.mjs";
+import { createHighlighter } from "shiki";
 import VSourceCode from "src/components/VSourceCode.vue";
-import { engine, rightDrawer, the } from "stores/app";
+import { rightDrawer, the } from "stores/app";
 import {
   cancel,
   deep,
@@ -327,10 +318,9 @@ const $q = useQuasar(),
   },
   drawerTab = ref("seo"),
   filter = ref(""),
-  highlighter = createHighlighterCoreSync({
-    engine,
-    langs: [langVue, langJson, langJsx, langTsx, langHtml, langJs, langTs],
-    themes: [themeDark, themeLight],
+  highlighter = await createHighlighter({
+    langs: ["vue", "json", "jsx", "tsx", "html"],
+    themes: ["dark-plus", "light-plus"],
   }),
   icon = computed({
     get() {
