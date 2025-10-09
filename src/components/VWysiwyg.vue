@@ -61,7 +61,6 @@ import type {
 import webFonts from "@unocss/preset-web-fonts";
 import initUnocssRuntime from "@unocss/runtime";
 import {
-  consoleError,
   customFetch,
   fonts as Fonts,
   getFontsObjectFromArray,
@@ -71,6 +70,7 @@ import Defaults from "app/uno.config";
 import mimes from "assets/mimes.json";
 import VChipsInputDialog from "components/dialogs/VChipsInputDialog.vue";
 import VLinkDialog from "components/dialogs/VLinkDialog.vue";
+import { consola } from "consola/browser";
 import { parse } from "path-browserify";
 import { useQuasar } from "quasar";
 import { urls } from "stores/app";
@@ -245,7 +245,7 @@ const emit = defineEmits(["update:modelValue"]),
           new Uint8Array(await file.arrayBuffer()),
           type,
         );
-      })().catch(consoleError);
+      })().catch(consola.error);
       urls.set(filePath, URL.createObjectURL(file));
       editor.value?.runCmd(
         "insertHTML",

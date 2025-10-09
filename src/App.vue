@@ -74,17 +74,18 @@ q-layout(view="hHh Lpr lff")
 <script setup lang="ts">
 import type { TFeed } from "@vuebro/shared";
 
-import { consoleError, feed, fonts, importmap } from "@vuebro/shared";
+import { feed, fonts, importmap } from "@vuebro/shared";
 import { useStorage } from "@vueuse/core";
 import VFaviconDialog from "components/dialogs/VFaviconDialog.vue";
 import VFeedDialog from "components/dialogs/VFeedDialog.vue";
 import VFontsDialog from "components/dialogs/VFontsDialog.vue";
 import VImportmapDialog from "components/dialogs/VImportmapDialog.vue";
+import { consola } from "consola/browser";
 import mime from "mime";
 import { useQuasar } from "quasar";
-import { domain, rightDrawer } from "stores/app";
 // eslint-disable-next-line import-x/no-unresolved
 import "virtual:uno.css";
+import { domain, rightDrawer } from "stores/app";
 import { cache, persistent } from "stores/defaults";
 import { bucket, getObjectText, putObject } from "stores/io";
 import { useI18n } from "vue-i18n";
@@ -180,7 +181,7 @@ const clickAI = () => {
       prompt: { model: await getObjectText(title, cache), type: "textarea" },
       title,
     }).onOk((data: string) => {
-      putObject(title, data, "text/plain").catch(consoleError);
+      putObject(title, data, "text/plain").catch(consola.error);
     });
   };
 </script>

@@ -83,10 +83,11 @@ q-page.column
 <script setup lang="ts">
 import type { TCredentials } from "@vuebro/shared";
 
-import { consoleError, validateCredentials } from "@vuebro/shared";
+import { validateCredentials } from "@vuebro/shared";
 import { useStorage } from "@vueuse/core";
 import VCredsDialog from "components/dialogs/VCredsDialog.vue";
 import VOtpDialog from "components/dialogs/VOtpDialog.vue";
+import { consola } from "consola/browser";
 import CryptoJS from "crypto-js";
 import contentPage from "pages/ContentPage.vue";
 import { useQuasar } from "quasar";
@@ -122,7 +123,7 @@ const add = () => {
       path = `/${name}`;
     bucket.value = bucketValue;
     router.addRoute({ component: contentPage, name, path });
-    router.push(path).catch(consoleError);
+    router.push(path).catch(consola.error);
   },
   getDir = async () => {
     if ($q.platform.is.electron) {

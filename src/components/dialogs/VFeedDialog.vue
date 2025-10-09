@@ -97,10 +97,10 @@ q-dialog(ref="dialogRef", full-width, full-height, @hide="onDialogHide")
 import type { TFeed } from "@vuebro/shared";
 import type { QForm } from "quasar";
 
-import { consoleError } from "@vuebro/shared";
 import { useFileDialog } from "@vueuse/core";
 import mimes from "assets/mimes.json";
 import VLinkDialog from "components/dialogs/VLinkDialog.vue";
+import { consola } from "consola/browser";
 import { parse } from "path-browserify";
 import { uid, useDialogPluginComponent, useQuasar } from "quasar";
 import { domain } from "stores/app";
@@ -192,7 +192,7 @@ onChange((files) => {
             new Uint8Array(await file.arrayBuffer()),
             type,
           );
-        })().catch(consoleError);
+        })().catch(consola.error);
         if (row.attachments[0])
           row.attachments[0].url = `https://${domain.value}/${filePath}`;
       } else

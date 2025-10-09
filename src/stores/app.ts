@@ -2,15 +2,8 @@ import type { TFeed, TImportmap, TPage } from "@vuebro/shared";
 import type { Ref } from "vue";
 import type { SFCDescriptor } from "vue/compiler-sfc";
 
-import {
-  atlas,
-  consoleError,
-  feed,
-  fonts,
-  importmap,
-  nodes,
-  pages,
-} from "@vuebro/shared";
+import { atlas, feed, fonts, importmap, nodes, pages } from "@vuebro/shared";
+import { consola } from "consola/browser";
 import jsonfeedToAtom from "jsonfeed-to-atom";
 import jsonfeedToRSS from "jsonfeed-to-rss";
 import { editor, Uri } from "monaco-editor";
@@ -133,12 +126,12 @@ ${value}
   </head>`,
             );
         if (loc)
-          putObject(`${loc}/index.html`, htm, "text/html").catch(consoleError);
+          putObject(`${loc}/index.html`, htm, "text/html").catch(consola.error);
         putObject(
           path ? `${path}/index.html` : "index.html",
           htm,
           "text/html",
-        ).catch(consoleError);
+        ).catch(consola.error);
       };
 
     watch(
@@ -243,7 +236,7 @@ const cleaner = (value: TAppPage[]) => {
           debounce(async () => {
             if (model && id) {
               putObject(`pages/${id}.${ext}`, model.getValue(), mime).catch(
-                consoleError,
+                consola.error,
               );
               if (language === "json" && atlas[id])
                 void (await putPage)(atlas[id] as TAppPage);
@@ -369,7 +362,7 @@ watch(
           .forEach((url) => {
             URL.revokeObjectURL(urls.get(url) ?? "");
             urls.delete(url);
-            deleteObject(url).catch(consoleError);
+            deleteObject(url).catch(consola.error);
           });
       }
       prevImages.length = 0;
@@ -402,7 +395,7 @@ watch(bucket, async (value) => {
           ) as TPage[]
         )[0] ?? ({} as TPage),
       );
-    })().catch(consoleError);
+    })().catch(consola.error);
     (async () => {
       fonts.length = 0;
       fonts.push(
@@ -410,19 +403,19 @@ watch(bucket, async (value) => {
           (await getObjectText("fonts.json", cache)) || "[]",
         ) as never[]),
       );
-    })().catch(consoleError);
+    })().catch(consola.error);
     (async () => {
       const { imports } = JSON.parse(
         (await getObjectText("index.importmap", cache)) || "{}",
       ) as TImportmap;
       importmap.imports = imports;
-    })().catch(consoleError);
+    })().catch(consola.error);
     (async () => {
       const { items } = JSON.parse(
         (await getObjectText("feed.json", cache)) || "{}",
       ) as TFeed;
       feed.items = items;
-    })().catch(consoleError);
+    })().catch(consola.error);
     (async () => {
       {
         const [cname = ""] = (await getObjectText("CNAME", cache)).split(
@@ -432,9 +425,9 @@ watch(bucket, async (value) => {
         domain.value = cname.trim();
       }
       watch(domain, (cname) => {
-        putObject("CNAME", cname, "text/plain").catch(consoleError);
+        putObject("CNAME", cname, "text/plain").catch(consola.error);
       });
-    })().catch(consoleError);
+    })().catch(consola.error);
     const [localManifest, serverManifest] = (
       [
         manifest,
@@ -460,7 +453,7 @@ watch(bucket, async (value) => {
       [...serverManifest]
         .filter((x) => !localManifest.has(x))
         .forEach((element) => {
-          deleteObject(element).catch(consoleError);
+          deleteObject(element).catch(consola.error);
         });
       [...localManifest.add(".vite/manifest.json")]
         .filter((x) => !serverManifest.has(x))
@@ -471,8 +464,8 @@ watch(bucket, async (value) => {
               element,
               new Uint8Array(await body.arrayBuffer()),
               body.type,
-            ).catch(consoleError);
-          })().catch(consoleError);
+            ).catch(consola.error);
+          })().catch(consola.error);
         });
     }
   } else {
@@ -492,7 +485,7 @@ watch(
   debounce((value) => {
     if (value)
       putObject("index.json", JSON.stringify(value), "application/json").catch(
-        consoleError,
+        consola.error,
       );
   }, second),
   { deep: true },
@@ -503,7 +496,7 @@ watch(
   debounce((value, oldValue) => {
     if (oldValue)
       putObject("fonts.json", JSON.stringify(value), "application/json").catch(
-        consoleError,
+        consola.error,
       );
   }),
 );
@@ -524,7 +517,7 @@ watch(
         "index.importmap",
         JSON.stringify({ imports }),
         "application/importmap+json",
-      ).catch(consoleError);
+      ).catch(consola.error);
   }),
   { deep: true },
 );
@@ -548,20 +541,20 @@ watch(
       "feed.json",
       JSON.stringify(jsonfeed),
       "application/feed+json",
-    ).catch(consoleError);
+    ).catch(consola.error);
     if (title && tld) {
       putObject(
         "feed.xml",
         // eslint-disable-next-line @typescript-eslint/no-unsafe-call
         jsonfeedToAtom(jsonfeed) as string,
         "application/atom+xml",
-      ).catch(consoleError);
+      ).catch(consola.error);
       putObject(
         "feed-rss.xml",
         // eslint-disable-next-line @typescript-eslint/no-unsafe-call
         jsonfeedToRSS(jsonfeed) as string,
         "application/rss+xml",
-      ).catch(consoleError);
+      ).catch(consola.error);
     }
   }),
   { deep: true },
@@ -599,7 +592,7 @@ watch(
           },
         }),
         "application/xml",
-      ).catch(consoleError);
+      ).catch(consola.error);
     }
   }, second),
   { deep: true },

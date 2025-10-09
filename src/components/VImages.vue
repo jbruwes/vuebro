@@ -41,9 +41,9 @@
 <script setup lang="ts">
 import type { TPage } from "@vuebro/shared";
 
-import { consoleError } from "@vuebro/shared";
 import { useFileDialog } from "@vueuse/core";
 import mimes from "assets/mimes.json";
+import { consola } from "consola/browser";
 import { parse } from "path-browserify";
 import { useQuasar } from "quasar";
 import { the, urls } from "stores/app";
@@ -125,7 +125,7 @@ watch(
         .forEach(({ url = "" }) => {
           (async () => {
             urls.set(url, URL.createObjectURL(await getObjectBlob(url)));
-          })().catch(consoleError);
+          })().catch(consola.error);
         });
     }
   },
@@ -162,7 +162,7 @@ onChange((files) => {
             new Uint8Array(await file.arrayBuffer()),
             type,
           );
-        })().catch(consoleError);
+        })().catch(consola.error);
         urls.set(filePath, URL.createObjectURL(file));
         image.url = filePath;
       } else
