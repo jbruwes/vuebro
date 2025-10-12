@@ -58,6 +58,7 @@ import type { QTree } from "quasar";
 
 import {
   add,
+  addChild,
   atlas,
   down,
   left,
@@ -72,6 +73,7 @@ import { deleted, selected } from "stores/app";
 import { cancel, immediate, persistent } from "stores/defaults";
 import { computed, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
+
 const { t } = useI18n();
 const $q = useQuasar(),
   errors = [
@@ -91,14 +93,16 @@ const $q = useQuasar(),
   qtree = ref<QTree>(),
   state = ref(false),
   the = computed(() =>
-    pages.value.length ? (atlas[selected.value ?? ""] ?? null) : undefined,
+    pages.value.length
+      ? (atlas.value[selected.value ?? ""] ?? null)
+      : undefined,
   ),
   title = t("Confirm"),
   value = false,
   visible = ref(false);
 const clickAdd = () => {
     if (the.value?.id) {
-      const id = add(the.value.id);
+      const id = the.value.parent ? add(the.value.id) : addChild(the.value.id);
       if (id) {
         if (the.value.children.length)
           qtree.value?.setExpanded(the.value.id, true);
