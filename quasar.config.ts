@@ -57,10 +57,10 @@ export default defineConfig(() => ({
   electron: {
     builder: {
       appId: "vuebro",
-      publish: [
-        { provider: "github", releaseType: "release" },
-        { channels: "stable", provider: "snapStore" },
-      ],
+      publish: [{ provider: "github", releaseType: "release" }],
+      snap: {
+        publish: [{ channels: ["stable"], provider: "snapStore" }],
+      },
     },
     bundler: "builder",
     preloadScripts: ["electron-preload"],
