@@ -44,7 +44,7 @@ const { dialogRef, onDialogCancel, onDialogHide, onDialogOK } =
   { t } = useI18n();
 
 const selected = ref<string | undefined>(),
-  the = computed(() => atlas[selected.value ?? ""]);
+  the = computed(() => atlas.value[selected.value ?? ""]);
 
 defineEmits([...useDialogPluginComponent.emits]);
 
