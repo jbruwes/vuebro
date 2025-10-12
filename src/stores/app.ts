@@ -192,7 +192,9 @@ ${JSON.stringify(imap, null, 1)}
     .map(({ file, name }) => [name, file]),
   the = computed(
     () =>
-      (atlas[selected.value ?? ""] ?? pages.value[0]) as TAppPage | undefined,
+      (atlas.value[selected.value ?? ""] ?? pages.value[0]) as
+        | TAppPage
+        | undefined,
   ),
   urls = reactive(new Map<string, string>());
 
@@ -225,23 +227,20 @@ const cleaner = (value: TAppPage[]) => {
   ) => {
     const uri = Uri.parse(`file:///${id}.${language}`);
     let model = editor.getModel(uri);
-    if (!model) {
-      const value = (await getObjectText(`pages/${id}.${ext}`, cache)) || init;
-      model = editor.getModel(uri);
-      if (!model) {
-        model = editor.createModel(value, language, uri);
-        model.onDidChangeContent(
-          debounce(async () => {
-            if (model && id) {
-              putObject(`pages/${id}.${ext}`, model.getValue(), mime).catch(
-                consola.error,
-              );
-              if (language === "json" && atlas[id])
-                void (await putPage)(atlas[id] as TAppPage);
-            }
-          }, second),
+    const initObject = async () => {
+      if (model && id) {
+        putObject(`pages/${id}.${ext}`, model.getValue(), mime).catch(
+          consola.error,
         );
+        if (language === "json" && atlas.value[id])
+          void (await putPage)(atlas.value[id] as TAppPage);
       }
+    };
+    if (!model) {
+      const value = await getObjectText(`pages/${id}.${ext}`, cache);
+      model = editor.createModel(value || init, language, uri);
+      model.onDidChangeContent(debounce(initObject, second));
+      if (!value) await initObject();
     }
     return model;
   },
@@ -340,7 +339,7 @@ const cleaner = (value: TAppPage[]) => {
   sfc = {
     get(this: TAppPage) {
       return this.id
-        ? getModel(this.id, "vue", "vue", "text/html", "<template></template>")
+        ? getModel(this.id, "vue", "vue", "text/plain", "<template></template>")
         : undefined;
     },
   };
