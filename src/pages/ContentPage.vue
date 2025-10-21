@@ -429,14 +429,13 @@ const clickAI = () => {
   },
   rules: ValidationRule[] = [
     (v) =>
-      !(
-        !!v &&
-        !!pages.value.find(
-          (element) =>
-            element.path === v ||
-            (element.id !== the.value?.id && element.loc === v),
-        )
-      ) || t("That name is already in use"),
+      !v ||
+      !pages.value.find(
+        (element) =>
+          element.path === v ||
+          (element.id !== the.value?.id && element.loc === v),
+      ) ||
+      t("That name is already in use"),
     (v: null | string) =>
       !["?", "\\", "#"].some((value) => v?.includes(value)) ||
       t("Prohibited characters are used"),
