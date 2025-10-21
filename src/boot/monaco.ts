@@ -1,7 +1,7 @@
 import type monacoNs from "monaco-editor-core";
 
 import { shikiToMonaco } from "@shikijs/monaco";
-import { configureMonacoSFC } from "@vuebro/monaco-sfc";
+import configureMonacoSFC from "@vuebro/monaco-sfc";
 // eslint-disable-next-line import-x/default
 import VueWorker from "@vuebro/monaco-sfc/vue.worker?worker";
 import * as monaco from "monaco-editor";
