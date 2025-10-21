@@ -60,11 +60,7 @@ import type {
 
 import webFonts from "@unocss/preset-web-fonts";
 import initUnocssRuntime from "@unocss/runtime";
-import {
-  customFetch,
-  fonts as Fonts,
-  getFontsObjectFromArray,
-} from "@vuebro/shared";
+import { fonts as Fonts, getFontsObjectFromArray } from "@vuebro/shared";
 import { useFileDialog } from "@vueuse/core";
 import Defaults from "app/uno.config";
 import mimes from "assets/mimes.json";
@@ -332,7 +328,7 @@ onMounted(() => {
     async (value) => {
       const fonts = getFontsObjectFromArray(value);
       let { presets } = Defaults;
-      presets = [...presets, webFonts({ customFetch, fonts })];
+      presets = [...presets, webFonts({ fonts })];
       const defaults = { presets };
       await initUnocssRuntime({ bypassDefined, defaults, rootElement });
     },
