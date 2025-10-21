@@ -27,18 +27,22 @@ const getHandle = async (
                 FileSystemDirectoryHandle | FileSystemFileHandle | undefined
               >[],
             ) => {
-              if (!leaf) return Bucket;
-              const { value } = resultAggregator[index - 1] ?? {};
-              if (value?.kind === "directory")
-                return (
-                  (await Array.fromAsync(value.values())).find(
-                    ({ name }) => name === leaf,
-                  ) ??
-                  (Create
-                    ? await value.getDirectoryHandle(leaf, { create })
-                    : undefined)
-                );
-              return undefined;
+              if (leaf) {
+                const { value } = resultAggregator[index - 1] ?? {};
+                if (value?.kind === "directory") {
+                  try {
+                    return await value.getFileHandle(leaf, { create: false });
+                  } catch {
+                    try {
+                      return await value.getDirectoryHandle(leaf, {
+                        create: Create,
+                      });
+                    } catch {
+                      return;
+                    }
+                  }
+                }
+              } else return Bucket;
             },
         ),
       )
