@@ -542,13 +542,13 @@ watch(
     if (title && tld) {
       putObject(
         "feed.xml",
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-call
+
         jsonfeedToAtom(jsonfeed) as string,
         "application/atom+xml",
       ).catch(consola.error);
       putObject(
         "feed-rss.xml",
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-call
+
         jsonfeedToRSS(jsonfeed) as string,
         "application/rss+xml",
       ).catch(consola.error);
