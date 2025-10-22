@@ -1,5 +1,4 @@
 import { defineConfig } from "#q-app/wrappers";
-import extractorPug from "@unocss/extractor-pug";
 import { fileURLToPath } from "url";
 import { mergeConfig } from "vite";
 import { viteStaticCopy } from "vite-plugin-static-copy";
@@ -40,10 +39,7 @@ export default defineConfig(() => ({
         },
         { server: false },
       ],
-      [
-        "@unocss/vite",
-        { configFile: "./uno.config.ts", extractors: [extractorPug()] },
-      ],
+      ["@unocss/vite"],
       [
         // @ts-expect-error Plugin<any>[]
         viteStaticCopy,
