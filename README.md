@@ -2,7 +2,7 @@
 
 # :punch: Web editor VueBro
 
-VueBro is an open-source and free web editor for creating websites
+## VueBro is an open-source and free web editor for creating websites
 
 ### :link: Project website: [vuebro.github.io](https://vuebro.github.io)
 
@@ -23,14 +23,14 @@ VueBro is an open-source and free web editor for creating websites
 
 ## :framed_picture: Screenshots
 
-[<img src="https://vuebro.github.io/images/screenshots/1.png" width="250"/>](https://vuebro.github.io/images/screenshots/1.png)
-[<img src="https://vuebro.github.io/images/screenshots/2.png" width="250"/>](https://vuebro.github.io/images/screenshots/2.png)
-[<img src="https://vuebro.github.io/images/screenshots/3.png" width="250"/>](https://vuebro.github.io/images/screenshots/3.png)
-[<img src="https://vuebro.github.io/images/screenshots/4.png" width="250"/>](https://vuebro.github.io/images/screenshots/4.png)
-[<img src="https://vuebro.github.io/images/screenshots/5.png" width="250"/>](https://vuebro.github.io/images/screenshots/5.png)
-[<img src="https://vuebro.github.io/images/screenshots/6.png" width="250"/>](https://vuebro.github.io/images/screenshots/6.png)
+[<img src="https://vuebro.github.io/images/screenshots/1.png" alt="screenshot 1" width="250"/>](https://vuebro.github.io/images/screenshots/1.png)
+[<img src="https://vuebro.github.io/images/screenshots/2.png" alt="screenshot 2" width="250"/>](https://vuebro.github.io/images/screenshots/2.png)
+[<img src="https://vuebro.github.io/images/screenshots/3.png" alt="screenshot 3" width="250"/>](https://vuebro.github.io/images/screenshots/3.png)
+[<img src="https://vuebro.github.io/images/screenshots/4.png" alt="screenshot 4" width="250"/>](https://vuebro.github.io/images/screenshots/4.png)
+[<img src="https://vuebro.github.io/images/screenshots/5.png" alt="screenshot 5" width="250"/>](https://vuebro.github.io/images/screenshots/5.png)
+[<img src="https://vuebro.github.io/images/screenshots/6.png" alt="screenshot 6" width="250"/>](https://vuebro.github.io/images/screenshots/6.png)
 
-> [!IMPORTANT]
+> [!IMPORTANT] <!-- eslint-disable-line -- This should be fixed in https://github.com/eslint/markdown/issues/294 -->
 >
 > - Create static websites with Vue without installing or setting up a development environment (Node.js, Vite, etc.)
 > - Create Vue single-file components (also known as \*.vue files, or SFC for Single File Component) without a preliminary build step
@@ -46,9 +46,9 @@ VueBro is an open-source and free web editor for creating websites
 > - Special attention is given to search engine optimization (SEO) mechanisms, which ensure that search bots can effectively index the site
 > - VueBro is a non-commercial, open-source project – feel free to explore and use it!
 
-> [!NOTE]
+> [!NOTE] <!-- eslint-disable-line -- This should be fixed in https://github.com/eslint/markdown/issues/294 -->
 >
-> <img src="https://vuebro.github.io/images/drakkar.svg" width="250"/>
+> <img src="https://vuebro.github.io/images/drakkar.svg" alt="drakkar" width="250"/>
 >
 > Made on the shores of the Baltic Sea
 
