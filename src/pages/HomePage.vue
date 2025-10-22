@@ -101,7 +101,6 @@ import { useRouter } from "vue-router";
 const { t } = useI18n();
 
 const $q = useQuasar(),
-  // eslint-disable-next-line no-undef
   APP_VERSION = __APP_VERSION__,
   credential = useStorage(
     "s3",
