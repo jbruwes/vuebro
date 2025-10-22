@@ -1,22 +1,5 @@
-import type { Preset } from "@unocss/core";
+import config from "@vuebro/configs/uno";
+import presets from "@vuebro/configs/uno/presets";
+import { defineConfig } from "unocss";
 
-import attributify from "@unocss/preset-attributify";
-import icons from "@unocss/preset-icons/browser";
-import tagify from "@unocss/preset-tagify";
-import typography from "@unocss/preset-typography";
-import wind4 from "@unocss/preset-wind4";
-
-/* -------------------------------------------------------------------------- */
-
-const cdn = "https://cdn.jsdelivr.net/npm/",
-  presets: Preset[] = [
-    wind4({ preflights: { reset: true } }),
-    typography(),
-    icons({ cdn }),
-    tagify(),
-    attributify(),
-  ];
-
-/* -------------------------------------------------------------------------- */
-
-export default { presets };
+export default defineConfig({ presets: presets(), ...config });
