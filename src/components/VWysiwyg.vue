@@ -58,11 +58,10 @@ import type {
   StringDictionary,
 } from "quasar";
 
-import webFonts from "@unocss/preset-web-fonts";
 import initUnocssRuntime from "@unocss/runtime";
+import presets from "@vuebro/configs/uno/presets";
 import { fonts as Fonts, getFontsObjectFromArray } from "@vuebro/shared";
 import { useFileDialog } from "@vueuse/core";
-import Defaults from "app/uno.config";
 import mimes from "assets/mimes.json";
 import VChipsInputDialog from "components/dialogs/VChipsInputDialog.vue";
 import VLinkDialog from "components/dialogs/VLinkDialog.vue";
@@ -85,7 +84,6 @@ let rootElement: () => Element | undefined;
 
 const { files, open } = useFileDialog({ accept, reset }),
   { t } = useI18n();
-
 const $q = useQuasar(),
   blocks = ref(false),
   editor = ref<QEditor>(),
@@ -326,11 +324,15 @@ onMounted(() => {
   watch(
     Fonts,
     async (value) => {
-      const fonts = getFontsObjectFromArray(value);
-      let { presets } = Defaults;
-      presets = [...presets, webFonts({ fonts })];
-      const defaults = { presets };
-      await initUnocssRuntime({ bypassDefined, defaults, rootElement });
+      await initUnocssRuntime({
+        bypassDefined,
+        defaults: {
+          presets: presets({
+            webFontsOptions: { fonts: getFontsObjectFromArray(value) },
+          }),
+        },
+        rootElement,
+      });
     },
     { immediate },
   );
