@@ -452,7 +452,7 @@ watch(
   { immediate },
 );
 
-async function send() {
+const send = async () => {
   if (mistral && log && message.value) {
     const content = [{ text: message.value, type: "text" }],
       { messages, system } = log.value;
@@ -487,7 +487,7 @@ async function send() {
       $q.notify({ message });
     }
   }
-}
+};
 </script>
 
 <style scoped>
