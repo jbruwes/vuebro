@@ -1,6 +1,5 @@
 .DS_Store
 .thumbs.db
-QWEN.md
 node_modules
 
 # Quasar core related directories
