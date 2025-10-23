@@ -3,8 +3,6 @@ import { fileURLToPath } from "url";
 import { mergeConfig } from "vite";
 import { viteStaticCopy } from "vite-plugin-static-copy";
 
-import { version } from "./package.json";
-
 export default defineConfig(() => ({
   animations: ["zoomIn", "zoomOut"],
   boot: ["main", "route", "quasar-lang-pack", "i18n", "monaco"],
@@ -52,22 +50,10 @@ export default defineConfig(() => ({
     ],
   },
   css: ["app.css"],
-  devServer: { open: false },
   electron: {
     builder: {
       appId: "vuebro",
       publish: [{ provider: "github", releaseType: "release" }],
-      releaseInfo: {
-        releaseNotes: `### MacOS
-
-Since this is a downloaded zip it has been marked as unsafe. You must unmark the zip with a terminal command:
-
-\`\`\`
-xattr -cr VueBro-${version}-arm64.dmg
-\`\`\`
-
-If you forgot the above xattr step, you will get the message “VueBro.app” is damaged and can’t be opened. You should move it to the Bin."`,
-      },
       snap: {
         publish: [{ channels: ["stable"], provider: "snapStore" }],
       },
