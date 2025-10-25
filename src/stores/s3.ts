@@ -1,22 +1,22 @@
-import type { S3ClientConfig } from "@aws-sdk/client-s3";
 import type { StreamingBlobPayloadInputTypes } from "@smithy/types";
+import type { S3ClientConfig } from "@aws-sdk/client-s3";
 import type { TCredentials } from "@vuebro/shared";
 
 import {
   DeleteObjectCommand,
-  GetObjectCommand,
   HeadBucketCommand,
   HeadObjectCommand,
+  GetObjectCommand,
   PutObjectCommand,
   S3Client,
 } from "@aws-sdk/client-s3";
 import { FetchHttpHandler } from "@smithy/fetch-http-handler";
 import { validateCredentials } from "@vuebro/shared";
+import { mergeDefaults } from "stores/defaults";
 import { useStorage } from "@vueuse/core";
 import CryptoJS from "crypto-js";
-import { mergeDefaults } from "stores/defaults";
 
-let s3Client: S3Client | undefined;
+let s3Client: undefined | S3Client;
 
 const credential = useStorage(
     "s3",
@@ -28,45 +28,15 @@ const credential = useStorage(
     localStorage,
     { mergeDefaults },
   ),
-  removeEmptyDirectories = undefined,
-  requestHandler = new FetchHttpHandler();
+  requestHandler = new FetchHttpHandler(),
+  removeEmptyDirectories = undefined;
 
 const setS3Client = (value?: S3Client) => {
   s3Client?.destroy();
   s3Client = value;
 };
-const deleteObject = async (Bucket: string, Key: string) => {
-    await s3Client?.send(new DeleteObjectCommand({ Bucket, Key }));
-  },
-  getObject = async (
-    Bucket: string,
-    Key: string,
-    ResponseCacheControl?: string,
-  ) => {
-    if (s3Client)
-      try {
-        const { Body, ContentType } = await s3Client.send(
-          new GetObjectCommand({ Bucket, Key, ResponseCacheControl }),
-        );
-        const headers = new Headers({ "content-type": ContentType ?? "" });
-        return new Response(Body as BodyInit, { headers });
-      } catch {
-        //
-      }
-    return new Response();
-  },
-  getObjectBlob = async (
-    Bucket: string,
-    Key: string,
-    ResponseCacheControl?: string,
-  ) => (await getObject(Bucket, Key, ResponseCacheControl)).blob(),
-  getObjectText = async (
-    Bucket: string,
-    Key: string,
-    ResponseCacheControl?: string,
-  ) => (await getObject(Bucket, Key, ResponseCacheControl)).text(),
-  headBucket = async (Bucket: string, pin: string | undefined) => {
-    let { accessKeyId, endpoint, region, secretAccessKey } =
+const headBucket = async (Bucket: string, pin: undefined | string) => {
+    let { secretAccessKey, accessKeyId, endpoint, region } =
       credential.value[Bucket] ?? {};
     if (pin) {
       accessKeyId = CryptoJS.AES.decrypt(accessKeyId ?? "", pin).toString(
@@ -83,12 +53,12 @@ const deleteObject = async (Bucket: string, Key: string) => {
         pin,
       ).toString(CryptoJS.enc.Utf8);
     }
-    const credentials = { accessKeyId, secretAccessKey };
+    const credentials = { secretAccessKey, accessKeyId };
     s3Client = new S3Client({
+      requestHandler,
       credentials,
       endpoint,
       region,
-      requestHandler,
     } as S3ClientConfig);
     try {
       await s3Client.send(new HeadBucketCommand({ Bucket }));
@@ -98,14 +68,23 @@ const deleteObject = async (Bucket: string, Key: string) => {
       throw new Error(message);
     }
   },
-  headObject = async (
+  getObject = async (
     Bucket: string,
     Key: string,
     ResponseCacheControl?: string,
-  ) =>
-    s3Client?.send(
-      new HeadObjectCommand({ Bucket, Key, ResponseCacheControl }),
-    ),
+  ) => {
+    if (s3Client)
+      try {
+        const { ContentType, Body } = await s3Client.send(
+          new GetObjectCommand({ ResponseCacheControl, Bucket, Key }),
+        );
+        const headers = new Headers({ "content-type": ContentType ?? "" });
+        return new Response(Body as BodyInit, { headers });
+      } catch {
+        //
+      }
+    return new Response();
+  },
   putObject = async (
     Bucket: string,
     Key: string,
@@ -115,18 +94,39 @@ const deleteObject = async (Bucket: string, Key: string) => {
     const Body =
       typeof body === "string" ? new TextEncoder().encode(body) : body;
     await s3Client?.send(
-      new PutObjectCommand({ Body, Bucket, ContentType, Key }),
+      new PutObjectCommand({ ContentType, Bucket, Body, Key }),
     );
+  },
+  headObject = async (
+    Bucket: string,
+    Key: string,
+    ResponseCacheControl?: string,
+  ) =>
+    s3Client?.send(
+      new HeadObjectCommand({ ResponseCacheControl, Bucket, Key }),
+    ),
+  getObjectBlob = async (
+    Bucket: string,
+    Key: string,
+    ResponseCacheControl?: string,
+  ) => (await getObject(Bucket, Key, ResponseCacheControl)).blob(),
+  getObjectText = async (
+    Bucket: string,
+    Key: string,
+    ResponseCacheControl?: string,
+  ) => (await getObject(Bucket, Key, ResponseCacheControl)).text(),
+  deleteObject = async (Bucket: string, Key: string) => {
+    await s3Client?.send(new DeleteObjectCommand({ Bucket, Key }));
   };
 
 export {
-  credential,
-  deleteObject,
+  removeEmptyDirectories,
   getObjectBlob,
   getObjectText,
+  deleteObject,
+  setS3Client,
+  credential,
   headBucket,
   headObject,
   putObject,
-  removeEmptyDirectories,
-  setS3Client,
 };

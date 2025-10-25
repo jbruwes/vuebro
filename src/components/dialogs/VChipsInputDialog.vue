@@ -28,7 +28,7 @@ q-dialog(ref="dialogRef", @hide="onDialogHide")
 import { useDialogPluginComponent } from "quasar";
 import { useI18n } from "vue-i18n";
 
-const { dialogRef, onDialogCancel, onDialogHide, onDialogOK } =
+const { onDialogCancel, onDialogHide, onDialogOK, dialogRef } =
     useDialogPluginComponent(),
   { message, title } = defineProps<{
     message: string;

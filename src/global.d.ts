@@ -3,16 +3,6 @@ import type { Dialog } from "electron";
 
 declare global {
   interface Window {
-    deleteObject: (Bucket: string, Key: string) => Promise<void>;
-    dialog: Dialog;
-    focusedWindowClose: () => void;
-    focusedWindowIsMaximized: () => boolean | undefined;
-    focusedWindowMinimize: () => void;
-    focusedWindowToggleMaximize: () => void;
-    getObjectBlob: (Bucket: string, Key: string) => Promise<Blob>;
-    getObjectText: (Bucket: string, Key: string) => Promise<string>;
-    headObject: (Bucket: string, Key: string) => Promise<undefined>;
-    MonacoEnvironment: Environment;
     putObject: (
       Bucket: string,
       Key: string,
@@ -22,5 +12,15 @@ declare global {
       directory: string,
       exclude?: string[],
     ) => Promise<void>;
+    getObjectText: (Bucket: string, Key: string) => Promise<string>;
+    headObject: (Bucket: string, Key: string) => Promise<undefined>;
+    getObjectBlob: (Bucket: string, Key: string) => Promise<Blob>;
+    deleteObject: (Bucket: string, Key: string) => Promise<void>;
+    focusedWindowIsMaximized: () => undefined | boolean;
+    focusedWindowToggleMaximize: () => void;
+    focusedWindowMinimize: () => void;
+    focusedWindowClose: () => void;
+    MonacoEnvironment: Environment;
+    dialog: Dialog;
   }
 }

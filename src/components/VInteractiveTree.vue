@@ -57,26 +57,25 @@ import type { TPage } from "@vuebro/shared";
 import type { QTree } from "quasar";
 
 import {
-  add,
   addChild,
+  remove,
   atlas,
-  down,
-  left,
   nodes,
   pages,
-  remove,
   right,
+  down,
+  left,
+  add,
   up,
 } from "@vuebro/shared";
+import { persistent, immediate, cancel } from "stores/defaults";
+import { selected, deleted } from "stores/app";
+import { computed, watch, ref } from "vue";
 import { useQuasar } from "quasar";
-import { deleted, selected } from "stores/app";
-import { cancel, immediate, persistent } from "stores/defaults";
-import { computed, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
 
 const { t } = useI18n();
-const $q = useQuasar(),
-  errors = [
+const errors = [
     (propNode: TPage) => !propNode.name,
     (propNode: TPage) =>
       !!pages.value.find(
@@ -88,69 +87,20 @@ const $q = useQuasar(),
     (propNode: TPage) =>
       ["?", "\\", "#"].some((value) => propNode.name?.includes(value)),
   ],
-  expanded = ref([nodes[0]?.id]),
-  message = t("Do you really want to delete?"),
-  qtree = ref<QTree>(),
-  state = ref(false),
   the = computed(() =>
     pages.value.length
       ? (atlas.value[selected.value ?? ""] ?? null)
       : undefined,
   ),
+  message = t("Do you really want to delete?"),
+  expanded = ref([nodes[0]?.id]),
+  qtree = ref<QTree>(),
   title = t("Confirm"),
-  value = false,
-  visible = ref(false);
-const clickAdd = () => {
-    if (the.value?.id) {
-      const id = the.value.parent ? add(the.value.id) : addChild(the.value.id);
-      if (id) {
-        if (the.value.children.length)
-          qtree.value?.setExpanded(the.value.id, true);
-        selected.value = id;
-      }
-    }
-    state.value = true;
-  },
-  clickDown = () => {
-    if (the.value?.id) down(the.value.id);
-    state.value = true;
-  },
-  clickLeft = () => {
-    if (the.value?.id) {
-      const id = left(the.value.id);
-      if (id) qtree.value?.setExpanded(id, true);
-    }
-    state.value = true;
-  },
-  clickRemove = () => {
-    if (the.value?.parent)
-      $q.dialog({ cancel, message, persistent, title }).onOk(() => {
-        if (the.value?.id) {
-          deleted.value = the.value;
-          const id = remove(the.value.id);
-          if (id) selected.value = id;
-        }
-      });
-    state.value = true;
-  },
-  clickRight = () => {
-    if (the.value?.id) {
-      const id = right(the.value.id);
-      if (id) qtree.value?.setExpanded(id, true);
-    }
-    state.value = true;
-  },
-  clickUp = () => {
-    if (the.value?.id) up(the.value.id);
-    state.value = true;
-  },
-  error = (propNode: TPage) =>
-    errors
-      .map((errFnc) => errFnc(propNode))
-      .reduceRight(
-        (previousValue, currentValue) => previousValue || currentValue,
-      ),
-  errorMessage = (propNode: TPage) => {
+  visible = ref(false),
+  state = ref(false),
+  $q = useQuasar(),
+  value = false;
+const errorMessage = (propNode: TPage) => {
     switch (true) {
       case errors[0]?.(propNode):
         return t("The name is empty");
@@ -162,12 +112,62 @@ const clickAdd = () => {
         return undefined;
     }
   },
+  clickRemove = () => {
+    if (the.value?.parent)
+      $q.dialog({ persistent, message, cancel, title }).onOk(() => {
+        if (the.value?.id) {
+          deleted.value = the.value;
+          const id = remove(the.value.id);
+          if (id) selected.value = id;
+        }
+      });
+    state.value = true;
+  },
+  clickAdd = () => {
+    if (the.value?.id) {
+      const id = the.value.parent ? add(the.value.id) : addChild(the.value.id);
+      if (id) {
+        if (the.value.children.length)
+          qtree.value?.setExpanded(the.value.id, true);
+        selected.value = id;
+      }
+    }
+    state.value = true;
+  },
   onIntersection = (entry: IntersectionObserverEntry) => {
     if (
       entry.target instanceof HTMLElement &&
       entry.target.dataset.id === selected.value
     )
       visible.value = entry.isIntersecting;
+  },
+  error = (propNode: TPage) =>
+    errors
+      .map((errFnc) => errFnc(propNode))
+      .reduceRight(
+        (previousValue, currentValue) => previousValue || currentValue,
+      ),
+  clickRight = () => {
+    if (the.value?.id) {
+      const id = right(the.value.id);
+      if (id) qtree.value?.setExpanded(id, true);
+    }
+    state.value = true;
+  },
+  clickLeft = () => {
+    if (the.value?.id) {
+      const id = left(the.value.id);
+      if (id) qtree.value?.setExpanded(id, true);
+    }
+    state.value = true;
+  },
+  clickDown = () => {
+    if (the.value?.id) down(the.value.id);
+    state.value = true;
+  },
+  clickUp = () => {
+    if (the.value?.id) up(the.value.id);
+    state.value = true;
   };
 watch(
   the,

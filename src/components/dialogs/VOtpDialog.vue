@@ -26,33 +26,33 @@ q-dialog(ref="dialogRef", @hide="onDialogHide")
 </template>
 
 <script setup lang="ts">
-import type { QInput } from "quasar";
 import type { ComponentPublicInstance } from "vue";
+import type { QInput } from "quasar";
 
-import CryptoJS from "crypto-js";
 import { useDialogPluginComponent } from "quasar";
-import { computed, ref, watch } from "vue";
+import { computed, watch, ref } from "vue";
+import CryptoJS from "crypto-js";
 
-const { dialogRef, onDialogHide, onDialogOK } = useDialogPluginComponent(),
+const { onDialogHide, onDialogOK, dialogRef } = useDialogPluginComponent(),
   { model } = defineProps<{
     model: string;
   }>();
 
-const error = ref(false),
-  fields = ref<QInput[]>([]),
+const payload = computed(() => fieldValues.value.filter(Boolean).join("")),
   fieldValues = ref<number[]>([]),
-  length = ref(4),
-  payload = computed(() => fieldValues.value.filter(Boolean).join("")),
-  selected = ref(0);
+  fields = ref<QInput[]>([]),
+  error = ref(false),
+  selected = ref(0),
+  length = ref(4);
 
-const focus = (index: number) => {
-    if (index >= 0 && index < length.value) selected.value = index;
-  },
-  updateFieldRef = (
+const updateFieldRef = (
     element: ComponentPublicInstance | Element | null,
     index: number,
   ) => {
     fields.value[index] = element as QInput;
+  },
+  focus = (index: number) => {
+    if (index >= 0 && index < length.value) selected.value = index;
   };
 
 defineEmits([...useDialogPluginComponent.emits]);

@@ -97,36 +97,33 @@ q-dialog(ref="dialogRef", full-width, full-height, @hide="onDialogHide")
 import type { TFeed } from "@vuebro/shared";
 import type { QForm } from "quasar";
 
-import { useFileDialog } from "@vueuse/core";
-import mimes from "assets/mimes.json";
+import { persistent, multiple, capture, accept, reset } from "stores/defaults";
+import { useDialogPluginComponent, useQuasar, uid } from "quasar";
 import VLinkDialog from "components/dialogs/VLinkDialog.vue";
+import { useFileDialog } from "@vueuse/core";
 import { consola } from "consola/browser";
+import { useTemplateRef, ref } from "vue";
 import { parse } from "path-browserify";
-import { uid, useDialogPluginComponent, useQuasar } from "quasar";
-import { domain } from "stores/app";
-import { accept, capture, multiple, persistent, reset } from "stores/defaults";
+import mimes from "assets/mimes.json";
 import { putObject } from "stores/io";
-import { ref, useTemplateRef } from "vue";
+import { domain } from "stores/app";
 import { useI18n } from "vue-i18n";
 
 let row: TFeed["items"][0] | undefined;
 
-const { dialogRef, onDialogCancel, onDialogHide, onDialogOK } =
-    useDialogPluginComponent(),
-  { feed } = defineProps<{ feed: TFeed }>(),
-  { items } = feed,
-  { onChange, open } = useFileDialog({
-    accept,
-    capture,
+const { onChange, open } = useFileDialog({
     multiple,
+    capture,
+    accept,
     reset,
   }),
-  { t } = useI18n();
+  { onDialogCancel, onDialogHide, onDialogOK, dialogRef } =
+    useDialogPluginComponent(),
+  { feed } = defineProps<{ feed: TFeed }>(),
+  { t } = useI18n(),
+  { items } = feed;
 
-const $q = useQuasar(),
-  filter = ref(""),
-  formRef = useTemplateRef<QForm>("form"),
-  rows = ref(
+const rows = ref(
     items
       .map((item) => {
         item.url ||= "";
@@ -139,20 +136,32 @@ const $q = useQuasar(),
       })
       .reverse(),
   ),
-  selected = ref<TFeed["items"]>([]);
+  formRef = useTemplateRef<QForm>("form"),
+  selected = ref<TFeed["items"]>([]),
+  $q = useQuasar(),
+  filter = ref("");
 
-const add = (value: TFeed["items"][0]) => {
-    row = value;
-    open();
+const removeRow = () => {
+    if (selected.value.length)
+      $q.dialog({
+        message: t("Do you really want to delete?"),
+        title: t("Confirm"),
+        persistent: true,
+        cancel: true,
+      }).onOk(() => {
+        const set = new Set(selected.value);
+        rows.value = rows.value.filter((x) => !set.has(x));
+        selected.value = [];
+      });
   },
   clickLink = (feed: TFeed["items"][0]) => {
     $q.dialog({
-      component: VLinkDialog,
       componentProps: {
         message: t("Select a page to insert the corresponding link"),
-        persistent,
         title: t("Internal Links"),
+        persistent,
       },
+      component: VLinkDialog,
     }).onOk((value: string) => {
       feed.url = `https://${domain.value}${value}`;
     });
@@ -164,18 +173,9 @@ const add = (value: TFeed["items"][0]) => {
         message: t("Title must be not empty"),
       });
   },
-  removeRow = () => {
-    if (selected.value.length)
-      $q.dialog({
-        cancel: true,
-        message: t("Do you really want to delete?"),
-        persistent: true,
-        title: t("Confirm"),
-      }).onOk(() => {
-        const set = new Set(selected.value);
-        rows.value = rows.value.filter((x) => !set.has(x));
-        selected.value = [];
-      });
+  add = (value: TFeed["items"][0]) => {
+    row = value;
+    open();
   };
 
 onChange((files) => {

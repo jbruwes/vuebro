@@ -66,25 +66,23 @@ q-dialog(ref="dialogRef", full-width, full-height, @hide="onDialogHide")
 <script setup lang="ts">
 import type { QTableProps } from "quasar";
 
-import json from "assets/importmap.json";
-import { uid, useDialogPluginComponent, useQuasar } from "quasar";
+import { useDialogPluginComponent, useQuasar, uid } from "quasar";
 import { staticEntries } from "stores/app";
-import { ref } from "vue";
+import json from "assets/importmap.json";
 import { useI18n } from "vue-i18n";
+import { ref } from "vue";
 
-const external = staticEntries.map(([name]) => name),
-  filter = ref(""),
-  { dialogRef, onDialogCancel, onDialogHide, onDialogOK } =
+const { onDialogCancel, onDialogHide, onDialogOK, dialogRef } =
     useDialogPluginComponent(),
   { importmap } = defineProps<{
     importmap: { imports: Record<string, string> };
   }>(),
+  external = staticEntries.map(([name]) => name),
   { imports } = importmap,
-  { t } = useI18n();
+  { t } = useI18n(),
+  filter = ref("");
 
-const $q = useQuasar(),
-  columns = json as QTableProps["columns"],
-  rows = ref(
+const rows = ref(
     [
       ...staticEntries,
       ...Object.entries(imports).filter(([name]) => !external.includes(name)),
@@ -94,15 +92,17 @@ const $q = useQuasar(),
       path,
     })),
   ),
-  selected = ref<Record<string, string>[]>([]);
+  selected = ref<Record<string, string>[]>([]),
+  columns = json as QTableProps["columns"],
+  $q = useQuasar();
 
 const removeRow = () => {
   if (selected.value.length)
     $q.dialog({
-      cancel: true,
       message: t("Do you really want to delete?"),
-      persistent: true,
       title: t("Confirm"),
+      persistent: true,
+      cancel: true,
     }).onOk(() => {
       const set = new Set(selected.value);
       rows.value = rows.value.filter((x) => !set.has(x));

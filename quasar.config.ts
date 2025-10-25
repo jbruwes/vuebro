@@ -1,25 +1,10 @@
+import { viteStaticCopy } from "vite-plugin-static-copy";
 import { defineConfig } from "#q-app/wrappers";
 import { fileURLToPath } from "url";
 import { mergeConfig } from "vite";
-import { viteStaticCopy } from "vite-plugin-static-copy";
 
 export default defineConfig(() => ({
-  animations: ["zoomIn", "zoomOut"],
-  boot: ["main", "route", "quasar-lang-pack", "i18n", "monaco"],
   build: {
-    alias: { "node:path": "path-browserify" },
-    extendViteConf: (config) => {
-      config.base = "./";
-      config.define = mergeConfig(
-        config.define ?? {},
-        {
-          __APP_VERSION__: JSON.stringify(process.env.npm_package_version),
-        },
-        false,
-      );
-    },
-    target: { browser: ["es2022", "firefox115", "chrome115", "safari15"] },
-    typescript: { strict: true, vueShim: true },
     vitePlugins: [
       [
         "@intlify/unplugin-vue-i18n/vite",
@@ -43,24 +28,39 @@ export default defineConfig(() => ({
         viteStaticCopy,
         {
           targets: [
-            { dest: "runtime", src: "./node_modules/@vuebro/runtime/dist/*" },
+            { src: "./node_modules/@vuebro/runtime/dist/*", dest: "runtime" },
           ],
         },
       ],
     ],
+    extendViteConf: (config) => {
+      config.base = "./";
+      config.define = mergeConfig(
+        config.define ?? {},
+        {
+          __APP_VERSION__: JSON.stringify(process.env.npm_package_version),
+        },
+        false,
+      );
+    },
+    target: { browser: ["es2022", "firefox115", "chrome115", "safari15"] },
+    typescript: { vueShim: true, strict: true },
+    alias: { "node:path": "path-browserify" },
   },
-  css: ["app.css"],
   electron: {
     builder: {
-      appId: "vuebro",
-      publish: [{ provider: "github", releaseType: "release" }],
       snap: {
-        publish: [{ channels: ["stable"], provider: "snapStore" }],
+        publish: [{ provider: "snapStore", channels: ["stable"] }],
       },
+      publish: [{ releaseType: "release", provider: "github" }],
+      appId: "vuebro",
     },
-    bundler: "builder",
     preloadScripts: ["electron-preload"],
+    bundler: "builder",
   },
+  boot: ["main", "route", "quasar-lang-pack", "i18n", "monaco"],
   extras: ["mdi-v7", "roboto-font", "material-icons"],
   framework: { plugins: ["Dialog", "Notify"] },
+  animations: ["zoomIn", "zoomOut"],
+  css: ["app.css"],
 }));

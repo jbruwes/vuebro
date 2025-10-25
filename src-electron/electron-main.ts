@@ -1,7 +1,7 @@
-import { enable, initialize } from "@electron/remote/main/index.js";
-import { app, BrowserWindow, Menu } from "electron";
-import path from "path";
+import { initialize, enable } from "@electron/remote/main/index.js";
+import { BrowserWindow, Menu, app } from "electron";
 import { fileURLToPath } from "url";
+import path from "path";
 
 let mainWindow: BrowserWindow | undefined;
 
@@ -9,10 +9,7 @@ const currentDir = fileURLToPath(new URL(".", import.meta.url));
 
 const createWindow = async () => {
   mainWindow = new BrowserWindow({
-    icon: path.resolve(currentDir, "icons/icon.png"),
-    show: false,
     webPreferences: {
-      devTools: false,
       preload: path.resolve(
         currentDir,
         path.join(
@@ -20,8 +17,11 @@ const createWindow = async () => {
           `electron-preload${process.env.QUASAR_ELECTRON_PRELOAD_EXTENSION}`,
         ),
       ),
+      devTools: false,
       sandbox: false,
     },
+    icon: path.resolve(currentDir, "icons/icon.png"),
+    show: false,
     width: 1000,
   });
   enable(mainWindow.webContents);

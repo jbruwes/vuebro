@@ -6,27 +6,27 @@
 import type { CompletionRegistration } from "monacopilot";
 import type { ThemeRegistrationRaw } from "shiki";
 
-import * as monaco from "monaco-editor";
-import { CompletionCopilot, registerCompletion } from "monacopilot";
+import { onBeforeUnmount, useTemplateRef, onMounted, watch } from "vue";
+import { registerCompletion, CompletionCopilot } from "monacopilot";
 import themeLight from "shiki/themes/light-plus.mjs";
 import { immediate } from "stores/defaults";
-import { onBeforeUnmount, onMounted, useTemplateRef, watch } from "vue";
+import * as monaco from "monaco-editor";
 
-let completion: CompletionRegistration | null = null,
-  editor: monaco.editor.IStandaloneCodeEditor | null = null;
+let editor: monaco.editor.IStandaloneCodeEditor | null = null,
+  completion: CompletionRegistration | null = null;
 
-const ambiguousCharacters = false,
-  automaticLayout = true,
-  fixedOverflowWidgets = true,
-  monacoRef = useTemplateRef<HTMLElement>("monacoRef"),
-  scrollBeyondLastLine = false,
-  unicodeHighlight = { ambiguousCharacters },
-  { apiKey, model, technologies } = defineProps<{
-    apiKey: string;
+const { technologies, apiKey, model } = defineProps<{
     model: Promise<monaco.editor.ITextModel>;
     technologies: string[];
+    apiKey: string;
   }>(),
-  { name: theme = "light-plus" }: ThemeRegistrationRaw = themeLight;
+  { name: theme = "light-plus" }: ThemeRegistrationRaw = themeLight,
+  monacoRef = useTemplateRef<HTMLElement>("monacoRef"),
+  ambiguousCharacters = false,
+  unicodeHighlight = { ambiguousCharacters },
+  scrollBeyondLastLine = false,
+  fixedOverflowWidgets = true,
+  automaticLayout = true;
 
 watch(
   () => model,
@@ -39,12 +39,12 @@ onMounted(async () => {
   editor =
     monacoRef.value &&
     monaco.editor.create(monacoRef.value, {
-      automaticLayout,
       fixedOverflowWidgets,
-      model: await model,
       scrollBeyondLastLine,
-      theme,
+      model: await model,
       unicodeHighlight,
+      automaticLayout,
+      theme,
     });
   watch(
     [() => apiKey, () => technologies],
@@ -53,19 +53,19 @@ onMounted(async () => {
       completion = null;
       if (apiKey && editor) {
         const copilot = new CompletionCopilot(apiKey, {
-            model: "codestral",
             provider: "mistral",
+            model: "codestral",
           }),
           {
             uri: { path },
           } = await model;
         completion = registerCompletion(monaco, editor, {
-          filename: path,
-          language: (await model).getLanguageId(),
           onError: () => {
             // console.error(error);
           },
           requestHandler: ({ body }) => copilot.complete({ body }),
+          language: (await model).getLanguageId(),
+          filename: path,
           technologies,
         });
       }
@@ -85,9 +85,6 @@ onMounted(async () => {
         t.getTokenStyleMetadata = (type: string, modifiers: string[]) => {
           let foreground = 0;
           switch (type) {
-            case "class":
-              foreground = 11;
-              break;
             case "function":
             case "method":
               foreground = 12;
@@ -95,6 +92,9 @@ onMounted(async () => {
             case "property":
             case "variable":
               foreground = modifiers.includes("readonly") ? 19 : 9;
+              break;
+            case "class":
+              foreground = 11;
               break;
             default:
           }

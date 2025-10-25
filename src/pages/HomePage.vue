@@ -83,26 +83,24 @@ q-page.column
 <script setup lang="ts">
 import type { TCredentials } from "@vuebro/shared";
 
-import { validateCredentials } from "@vuebro/shared";
-import { useStorage } from "@vueuse/core";
+import { setFileSystemDirectoryHandle, headBucket, bucket } from "stores/io";
 import VCredsDialog from "components/dialogs/VCredsDialog.vue";
-import VOtpDialog from "components/dialogs/VOtpDialog.vue";
-import { consola } from "consola/browser";
-import CryptoJS from "crypto-js";
-import contentPage from "pages/ContentPage.vue";
-import { useQuasar } from "quasar";
-import { rightDrawer } from "stores/app";
 import { mergeDefaults, persistent } from "stores/defaults";
-import { bucket, headBucket, setFileSystemDirectoryHandle } from "stores/io";
-import { triggerRef } from "vue";
-import { useI18n } from "vue-i18n";
+import VOtpDialog from "components/dialogs/VOtpDialog.vue";
+import { validateCredentials } from "@vuebro/shared";
+import contentPage from "pages/ContentPage.vue";
+import { useStorage } from "@vueuse/core";
+import { consola } from "consola/browser";
+import { rightDrawer } from "stores/app";
 import { useRouter } from "vue-router";
+import { useQuasar } from "quasar";
+import { useI18n } from "vue-i18n";
+import CryptoJS from "crypto-js";
+import { triggerRef } from "vue";
 
 const { t } = useI18n();
 
-const $q = useQuasar(),
-  APP_VERSION = __APP_VERSION__,
-  credential = useStorage(
+const credential = useStorage(
     "s3",
     () => {
       const value = {} as TCredentials;
@@ -112,17 +110,38 @@ const $q = useQuasar(),
     localStorage,
     { mergeDefaults },
   ),
-  router = useRouter();
+  APP_VERSION = __APP_VERSION__,
+  router = useRouter(),
+  $q = useQuasar();
 
-const add = () => {
-    $q.dialog({ component: VCredsDialog, componentProps: { persistent } });
-  },
-  directLogin = (bucketValue: string) => {
-    const name = "main",
-      path = `/${name}`;
-    bucket.value = bucketValue;
-    router.addRoute({ component: contentPage, name, path });
-    router.push(path).catch(consola.error);
+const lock = (name: string) => {
+    $q.dialog({
+      componentProps: {
+        model:
+          name === credential.value[name]?.Bucket
+            ? undefined
+            : credential.value[name]?.Bucket,
+      },
+      component: VOtpDialog,
+    }).onOk((payload: string) => {
+      const cred = credential.value[name];
+      if (cred)
+        if (name === cred.Bucket) {
+          Object.keys(cred).forEach((key) => {
+            cred[key] = CryptoJS.AES.encrypt(
+              (cred[key] ?? "") as string,
+              payload,
+            ).toString();
+          });
+        } else {
+          Object.keys(cred).forEach((key) => {
+            cred[key] = CryptoJS.AES.decrypt(
+              (cred[key] ?? "") as string,
+              payload,
+            ).toString(CryptoJS.enc.Utf8);
+          });
+        }
+    });
   },
   getDir = async () => {
     if ($q.platform.is.electron) {
@@ -145,12 +164,12 @@ const add = () => {
         $q.notify({ message });
       }
   },
-  getPin = async (name: string): Promise<string | undefined> =>
+  getPin = async (name: string): Promise<undefined | string> =>
     new Promise((resolve, reject) => {
       if (name !== credential.value[name]?.Bucket) {
         $q.dialog({
-          component: VOtpDialog,
           componentProps: { model: credential.value[name]?.Bucket },
+          component: VOtpDialog,
         })
           .onOk((payload: string) => {
             resolve(payload);
@@ -160,34 +179,14 @@ const add = () => {
           });
       } else resolve(undefined);
     }),
-  isFileSystemAccess = () => "showOpenFilePicker" in window,
-  lock = (name: string) => {
+  remove = (name: number | string) => {
     $q.dialog({
-      component: VOtpDialog,
-      componentProps: {
-        model:
-          name === credential.value[name]?.Bucket
-            ? undefined
-            : credential.value[name]?.Bucket,
-      },
-    }).onOk((payload: string) => {
-      const cred = credential.value[name];
-      if (cred)
-        if (name === cred.Bucket) {
-          Object.keys(cred).forEach((key) => {
-            cred[key] = CryptoJS.AES.encrypt(
-              (cred[key] ?? "") as string,
-              payload,
-            ).toString();
-          });
-        } else {
-          Object.keys(cred).forEach((key) => {
-            cred[key] = CryptoJS.AES.decrypt(
-              (cred[key] ?? "") as string,
-              payload,
-            ).toString(CryptoJS.enc.Utf8);
-          });
-        }
+      message: t("Do you really want to remove an account from the list?"),
+      title: t("Confirm"),
+      cancel: true,
+    }).onOk(() => {
+      Reflect.deleteProperty(credential.value, name.toString());
+      triggerRef(credential);
     });
   },
   login = async (bucketValue: string) => {
@@ -199,26 +198,27 @@ const add = () => {
       $q.notify({ message });
     }
   },
-  remove = (name: number | string) => {
-    $q.dialog({
-      cancel: true,
-      message: t("Do you really want to remove an account from the list?"),
-      title: t("Confirm"),
-    }).onOk(() => {
-      Reflect.deleteProperty(credential.value, name.toString());
-      triggerRef(credential);
-    });
-  };
+  directLogin = (bucketValue: string) => {
+    const name = "main",
+      path = `/${name}`;
+    bucket.value = bucketValue;
+    router.addRoute({ component: contentPage, name, path });
+    router.push(path).catch(consola.error);
+  },
+  add = () => {
+    $q.dialog({ componentProps: { persistent }, component: VCredsDialog });
+  },
+  isFileSystemAccess = () => "showOpenFilePicker" in window;
 
 const edit = async (name: number | string) => {
   try {
     $q.dialog({
-      component: VCredsDialog,
       componentProps: {
+        pin: await getPin(name.toString()),
         model: name,
         persistent,
-        pin: await getPin(name.toString()),
       },
+      component: VCredsDialog,
     });
   } catch (err) {
     const { message } = err as Error;
