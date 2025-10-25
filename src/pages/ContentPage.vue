@@ -326,7 +326,7 @@ const $q = useQuasar(),
     get() {
       return the.value?.icon?.replace(/^mdi:/, "mdi-");
     },
-    set(value) {
+    set(value: string | undefined) {
       if (value && the.value) the.value.icon = value.replace(/^mdi-/, "mdi:");
     },
   }),
@@ -338,7 +338,7 @@ const $q = useQuasar(),
     get() {
       return the.value?.loc ?? null;
     },
-    set(value) {
+    set(value: null | string) {
       if (the.value)
         the.value.loc = value?.replace(/((?=(\/+))\2)$|(^\/+)/g, "") ?? null;
     },
