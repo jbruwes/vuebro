@@ -1,51 +1,62 @@
-import type { TImportmap, TFeed, TPage } from "@vuebro/shared";
-import type { SFCDescriptor } from "vue/compiler-sfc";
+import type { TFeed, TImportmap, TPage } from "@vuebro/shared";
 import type { Ref } from "vue";
+import type { SFCDescriptor } from "vue/compiler-sfc";
 
-import {
-  removeEmptyDirectories,
-  getObjectBlob,
-  getObjectText,
-  deleteObject,
-  headObject,
-  putObject,
-  bucket,
-} from "stores/io";
-import { importmap, atlas, fonts, nodes, pages, feed } from "@vuebro/shared";
-import { writable, second, cache } from "stores/defaults";
-import { computed, reactive, watch, ref } from "vue";
-import toString from "vue-sfc-descriptor-to-string";
+import { atlas, feed, fonts, importmap, nodes, pages } from "@vuebro/shared";
+import { consola } from "consola/browser";
 import jsonfeedToAtom from "jsonfeed-to-atom";
 import jsonfeedToRSS from "jsonfeed-to-rss";
 import { editor, Uri } from "monaco-editor";
-import { consola } from "consola/browser";
-import { parse } from "vue/compiler-sfc";
 import { debounce } from "quasar";
+import { cache, second, writable } from "stores/defaults";
+import {
+  bucket,
+  deleteObject,
+  getObjectBlob,
+  getObjectText,
+  headObject,
+  putObject,
+  removeEmptyDirectories,
+} from "stores/io";
 import { toXML } from "to-xml";
+import { computed, reactive, ref, watch } from "vue";
+import toString from "vue-sfc-descriptor-to-string";
+import { parse } from "vue/compiler-sfc";
 
-type TAppPage = {
+type TAppPage = TPage & {
+  contenteditable: boolean;
+  html: Promise<string> | string;
   jsonld: Promise<editor.ITextModel>;
   sfc: Promise<editor.ITextModel>;
-  html: Promise<string> | string;
-  contenteditable: boolean;
-} & TPage;
+};
 
 const domain = ref("");
 
-const putPage = (async () => {
+const deleted: Ref<TPage | undefined> = ref(),
+  initJsonLD = `{
+    "@context": "https://schema.org"
+}`,
+  manifest = (await (
+    await fetch("runtime/.vite/manifest.json")
+  ).json()) as Record<string, Record<string, string>>,
+  parser = new DOMParser(),
+  prevImages: string[] = [],
+  putPage = (async () => {
     let body: string;
 
-    const putPage = async ({
-        description,
-        keywords,
+    const index = await (await fetch("runtime/index.html")).text(),
+      oldPages: Record<string, null | string | undefined>[] = [],
+      putPage = async ({
         branch,
+        description,
         images,
         jsonld,
-        title,
-        path,
-        type,
+        keywords,
         loc,
+        path,
+        title,
         to,
+        type,
       }: TAppPage) => {
         let value;
         try {
@@ -120,17 +131,15 @@ ${value}
           htm,
           "text/html",
         ).catch(consola.error);
-      },
-      oldPages: Record<string, undefined | string | null>[] = [],
-      index = await (await fetch("runtime/index.html")).text();
+      };
 
     watch(
       [pages, importmap, domain],
       debounce(async (arr) => {
         const [page, imap] = arr as [TPage[], TImportmap, string],
-          promises: Promise<void>[] = [],
-          [{ title = "" } = {}] = page;
-        oldPages.forEach(({ path, loc }) => {
+          [{ title = "" } = {}] = page,
+          promises: Promise<void>[] = [];
+        oldPages.forEach(({ loc, path }) => {
           if (loc && !page.find((value) => value.loc === loc))
             promises.push(deleteObject(`${loc}/index.html`));
           if (!page.find((value) => value.path === path))
@@ -166,8 +175,8 @@ ${JSON.stringify(imap, null, 1)}
         (page as TAppPage[])
           .filter(({ path }) => path !== undefined)
           .forEach((value) => {
-            const { path, loc } = value;
-            oldPages.push({ path, loc });
+            const { loc, path } = value;
+            oldPages.push({ loc, path });
             void putPage(value);
           });
       }, second),
@@ -176,35 +185,106 @@ ${JSON.stringify(imap, null, 1)}
 
     return putPage;
   })(),
-  manifest = (await (
-    await fetch("runtime/.vite/manifest.json")
-  ).json()) as Record<string, Record<string, string>>,
+  rightDrawer = ref(false),
+  routerLink = "router-link",
+  selected: Ref<string | undefined> = ref(),
   staticEntries = Object.values(manifest)
     .filter(({ isStaticEntry }) => isStaticEntry)
     .map(({ file, name }) => [name, file]),
   the = computed(
     () =>
       (atlas.value[selected.value ?? ""] ?? pages.value[0]) as
-        | undefined
-        | TAppPage,
+        | TAppPage
+        | undefined,
   ),
-  initJsonLD = `{
-    "@context": "https://schema.org"
-}`,
-  urls = reactive(new Map<string, string>()),
-  selected: Ref<undefined | string> = ref(),
-  deleted: Ref<undefined | TPage> = ref(),
-  routerLink = "router-link",
-  prevImages: string[] = [],
-  parser = new DOMParser(),
-  rightDrawer = ref(false);
+  urls = reactive(new Map<string, string>());
 
 let descriptor: SFCDescriptor | undefined;
 
-const html = {
+const cleaner = (value: TAppPage[]) => {
+    value.forEach((page) => {
+      const { children, id, images } = page;
+      if (children.length) cleaner(children as TAppPage[]);
+      images.forEach(({ url }) => {
+        void deleteObject(url);
+      });
+      if (id) {
+        void deleteObject(`pages/${id}.vue`);
+        void deleteObject(`pages/${id}.jsonld`);
+      }
+    });
+  },
+  getDocument = (value: string) =>
+    parser.parseFromString(
+      `<head><base href="//"></head><body>${value}</body>`,
+      "text/html",
+    ),
+  getModel = async (
+    id: string,
+    ext: string,
+    language: string,
+    mime: string,
+    init: string,
+  ) => {
+    const uri = Uri.parse(`file:///${id}.${language}`);
+    let model = editor.getModel(uri);
+    const initObject = async () => {
+      if (model && id) {
+        putObject(`pages/${id}.${ext}`, model.getValue(), mime).catch(
+          consola.error,
+        );
+        if (language === "json" && atlas.value[id])
+          void (await putPage)(atlas.value[id] as TAppPage);
+      }
+    };
+    if (!model) {
+      const value = await getObjectText(`pages/${id}.${ext}`, cache);
+      model = editor.createModel(value || init, language, uri);
+      model.onDidChangeContent(debounce(initObject, second));
+      if (!value) await initObject();
+    }
+    return model;
+  },
+  html = {
+    async get(this: TAppPage) {
+      ({ descriptor } = parse((await this.sfc).getValue()));
+      const { template } = descriptor;
+      const { content } = template ?? {};
+      const doc = getDocument(content ?? "");
+      doc.querySelectorAll(routerLink).forEach((link) => {
+        const a = document.createElement("a");
+        a.innerHTML = link.innerHTML;
+        a.setAttribute(`data-${routerLink}`, "true");
+        [...link.attributes].forEach((attr) => {
+          if (attr.nodeName === "to")
+            a.setAttribute("href", attr.nodeValue ?? "");
+          else a.setAttributeNode(attr.cloneNode() as Attr);
+        });
+        link.replaceWith(a);
+      });
+      (
+        await Promise.all(
+          [...doc.images].map((image) => {
+            const src = image.getAttribute("src");
+            return src && !urls.has(src)
+              ? getObjectBlob(src)
+              : Promise.resolve(undefined);
+          }),
+        )
+      ).forEach((image, index) => {
+        const src = doc.images[index]?.getAttribute("src") ?? "";
+        if (image?.size) urls.set(src, URL.createObjectURL(image));
+        const url = urls.get(src);
+        if (url) {
+          doc.images[index]?.setAttribute("data-src", src);
+          doc.images[index]?.setAttribute("src", url);
+        }
+      });
+      return doc.body.innerHTML;
+    },
     async set(this: TAppPage, value: string) {
-      const sfc: editor.ITextModel = await this.sfc,
-        doc = getDocument(value);
+      const doc = getDocument(value),
+        sfc: editor.ITextModel = await this.sfc;
       doc.querySelectorAll("a").forEach((a) => {
         try {
           const url = new URL(
@@ -249,81 +329,6 @@ const html = {
         );
       }
     },
-    async get(this: TAppPage) {
-      ({ descriptor } = parse((await this.sfc).getValue()));
-      const { template } = descriptor;
-      const { content } = template ?? {};
-      const doc = getDocument(content ?? "");
-      doc.querySelectorAll(routerLink).forEach((link) => {
-        const a = document.createElement("a");
-        a.innerHTML = link.innerHTML;
-        a.setAttribute(`data-${routerLink}`, "true");
-        [...link.attributes].forEach((attr) => {
-          if (attr.nodeName === "to")
-            a.setAttribute("href", attr.nodeValue ?? "");
-          else a.setAttributeNode(attr.cloneNode() as Attr);
-        });
-        link.replaceWith(a);
-      });
-      (
-        await Promise.all(
-          [...doc.images].map((image) => {
-            const src = image.getAttribute("src");
-            return src && !urls.has(src)
-              ? getObjectBlob(src)
-              : Promise.resolve(undefined);
-          }),
-        )
-      ).forEach((image, index) => {
-        const src = doc.images[index]?.getAttribute("src") ?? "";
-        if (image?.size) urls.set(src, URL.createObjectURL(image));
-        const url = urls.get(src);
-        if (url) {
-          doc.images[index]?.setAttribute("data-src", src);
-          doc.images[index]?.setAttribute("src", url);
-        }
-      });
-      return doc.body.innerHTML;
-    },
-  },
-  getModel = async (
-    id: string,
-    ext: string,
-    language: string,
-    mime: string,
-    init: string,
-  ) => {
-    const uri = Uri.parse(`file:///${id}.${language}`);
-    let model = editor.getModel(uri);
-    const initObject = async () => {
-      if (model && id) {
-        putObject(`pages/${id}.${ext}`, model.getValue(), mime).catch(
-          consola.error,
-        );
-        if (language === "json" && atlas.value[id])
-          void (await putPage)(atlas.value[id] as TAppPage);
-      }
-    };
-    if (!model) {
-      const value = await getObjectText(`pages/${id}.${ext}`, cache);
-      model = editor.createModel(value || init, language, uri);
-      model.onDidChangeContent(debounce(initObject, second));
-      if (!value) await initObject();
-    }
-    return model;
-  },
-  cleaner = (value: TAppPage[]) => {
-    value.forEach((page) => {
-      const { children, images, id } = page;
-      if (children.length) cleaner(children as TAppPage[]);
-      images.forEach(({ url }) => {
-        void deleteObject(url);
-      });
-      if (id) {
-        void deleteObject(`pages/${id}.vue`);
-        void deleteObject(`pages/${id}.jsonld`);
-      }
-    });
   },
   jsonld = {
     get(this: TAppPage) {
@@ -338,12 +343,7 @@ const html = {
         ? getModel(this.id, "vue", "vue", "text/plain", "<template></template>")
         : undefined;
     },
-  },
-  getDocument = (value: string) =>
-    parser.parseFromString(
-      `<head><base href="//"></head><body>${value}</body>`,
-      "text/html",
-    );
+  };
 
 watch(deleted, (value) => {
   if (value) cleaner([value as TAppPage]);
@@ -372,12 +372,12 @@ watch(
 
 watch(pages, (objects) => {
   const value = false,
-    contenteditable = { writable, value };
+    contenteditable = { value, writable };
   objects.forEach((object) => {
     Object.defineProperties(object, {
       contenteditable,
-      jsonld,
       html,
+      jsonld,
       sfc,
     });
   });
@@ -527,9 +527,9 @@ watch(
       [{ title } = {}] = page,
       { items } = value;
     const jsonfeed = {
-      version: "https://jsonfeed.org/version/1",
       items,
       title,
+      version: "https://jsonfeed.org/version/1",
     } as TFeed;
     if (tld) {
       jsonfeed.feed_url = `https://${tld}/feed.json`;
@@ -566,11 +566,13 @@ watch(
       putObject(
         "sitemap.xml",
         toXML({
+          "?": 'xml version="1.0" encoding="UTF-8"',
           urlset: {
+            "@xmlns": "https://www.sitemaps.org/schemas/sitemap/0.9",
             url: [
               ...page
                 .filter(({ enabled, path }) => enabled && path !== undefined)
-                .map(({ changefreq, priority, lastmod, to }) => ({
+                .map(({ changefreq, lastmod, priority, to }) => ({
                   ...(changefreq && { changefreq }),
                   ...(lastmod && { lastmod }),
                   ...(priority && { priority }),
@@ -578,16 +580,14 @@ watch(
                 })),
               ...page
                 .filter(({ enabled, loc }) => enabled && loc)
-                .map(({ changefreq, priority, lastmod, loc }) => ({
+                .map(({ changefreq, lastmod, loc, priority }) => ({
                   ...(changefreq && { changefreq }),
                   ...(lastmod && { lastmod }),
                   ...(priority && { priority }),
                   loc: `https://${cname}${encodeURI(loc?.replace(/^\/?/, "/").replace(/\/?$/, "/") ?? "")}`,
                 })),
             ],
-            "@xmlns": "https://www.sitemaps.org/schemas/sitemap/0.9",
           },
-          "?": 'xml version="1.0" encoding="UTF-8"',
         }),
         "application/xml",
       ).catch(consola.error);
@@ -598,4 +598,4 @@ watch(
 
 export type { TAppPage };
 
-export { staticEntries, rightDrawer, selected, deleted, domain, urls, the };
+export { deleted, domain, rightDrawer, selected, staticEntries, the, urls };

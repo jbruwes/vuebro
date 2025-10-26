@@ -60,29 +60,29 @@ q-dialog(ref="dialogRef", full-height, @hide="onDialogHide")
 <script setup lang="ts">
 import type { QTableProps } from "quasar";
 
-import { useDialogPluginComponent, useQuasar, uid } from "quasar";
 import json from "assets/fonts.json";
-import { useI18n } from "vue-i18n";
+import { uid, useDialogPluginComponent, useQuasar } from "quasar";
 import { ref } from "vue";
+import { useI18n } from "vue-i18n";
 
-const { onDialogCancel, onDialogHide, onDialogOK, dialogRef } =
+const { dialogRef, onDialogCancel, onDialogHide, onDialogOK } =
     useDialogPluginComponent(),
   { fonts } = defineProps<{ fonts: string[] }>(),
   { t } = useI18n();
 
-const rows = ref(fonts.map((name) => ({ id: uid(), name }))),
-  selected = ref<Record<string, string>[]>([]),
+const $q = useQuasar(),
   columns = json as QTableProps["columns"],
-  $q = useQuasar(),
-  filter = ref("");
+  filter = ref(""),
+  rows = ref(fonts.map((name) => ({ id: uid(), name }))),
+  selected = ref<Record<string, string>[]>([]);
 
 const removeRow = () => {
   if (selected.value.length)
     $q.dialog({
-      message: t("Do you really want to delete?"),
-      title: t("Confirm"),
-      persistent: true,
       cancel: true,
+      message: t("Do you really want to delete?"),
+      persistent: true,
+      title: t("Confirm"),
     }).onOk(() => {
       const set = new Set(selected.value);
       rows.value = rows.value.filter((x) => !set.has(x));

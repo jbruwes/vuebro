@@ -1,5 +1,5 @@
-import { createMemoryHistory, createRouter } from "vue-router";
 import { defineRouter } from "#q-app/wrappers";
+import { createMemoryHistory, createRouter } from "vue-router";
 
 import routes from "./routes";
 

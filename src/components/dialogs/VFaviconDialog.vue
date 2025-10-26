@@ -22,11 +22,11 @@ import { putObject } from "stores/io";
 import { useTemplateRef } from "vue";
 import { useI18n } from "vue-i18n";
 
-const { onDialogHide, dialogRef } = useDialogPluginComponent(),
+const { dialogRef, onDialogHide } = useDialogPluginComponent(),
   { t } = useI18n();
 
-const uploader = useTemplateRef<QUploader | null>("uploader"),
-  $q = useQuasar();
+const $q = useQuasar(),
+  uploader = useTemplateRef<null | QUploader>("uploader");
 
 const factory = async (files: readonly File[]) => {
   const [file] = files;

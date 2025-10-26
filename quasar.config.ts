@@ -1,10 +1,25 @@
-import { viteStaticCopy } from "vite-plugin-static-copy";
 import { defineConfig } from "#q-app/wrappers";
 import { fileURLToPath } from "url";
 import { mergeConfig } from "vite";
+import { viteStaticCopy } from "vite-plugin-static-copy";
 
 export default defineConfig(() => ({
+  animations: ["zoomIn", "zoomOut"],
+  boot: ["main", "route", "quasar-lang-pack", "i18n", "monaco"],
   build: {
+    alias: { "node:path": "path-browserify" },
+    extendViteConf: (config) => {
+      config.base = "./";
+      config.define = mergeConfig(
+        config.define ?? {},
+        {
+          __APP_VERSION__: JSON.stringify(process.env.npm_package_version),
+        },
+        false,
+      );
+    },
+    target: { browser: ["es2022", "firefox115", "chrome115", "safari15"] },
+    typescript: { strict: true, vueShim: true },
     vitePlugins: [
       [
         "@intlify/unplugin-vue-i18n/vite",
@@ -28,39 +43,24 @@ export default defineConfig(() => ({
         viteStaticCopy,
         {
           targets: [
-            { src: "./node_modules/@vuebro/runtime/dist/*", dest: "runtime" },
+            { dest: "runtime", src: "./node_modules/@vuebro/runtime/dist/*" },
           ],
         },
       ],
     ],
-    extendViteConf: (config) => {
-      config.base = "./";
-      config.define = mergeConfig(
-        config.define ?? {},
-        {
-          __APP_VERSION__: JSON.stringify(process.env.npm_package_version),
-        },
-        false,
-      );
-    },
-    target: { browser: ["es2022", "firefox115", "chrome115", "safari15"] },
-    typescript: { vueShim: true, strict: true },
-    alias: { "node:path": "path-browserify" },
   },
+  css: ["app.css"],
   electron: {
     builder: {
-      snap: {
-        publish: [{ provider: "snapStore", channels: ["stable"] }],
-      },
-      publish: [{ releaseType: "release", provider: "github" }],
       appId: "vuebro",
+      publish: [{ provider: "github", releaseType: "release" }],
+      snap: {
+        publish: [{ channels: ["stable"], provider: "snapStore" }],
+      },
     },
-    preloadScripts: ["electron-preload"],
     bundler: "builder",
+    preloadScripts: ["electron-preload"],
   },
-  boot: ["main", "route", "quasar-lang-pack", "i18n", "monaco"],
   extras: ["mdi-v7", "roboto-font", "material-icons"],
   framework: { plugins: ["Dialog", "Notify"] },
-  animations: ["zoomIn", "zoomOut"],
-  css: ["app.css"],
 }));

@@ -51,7 +51,27 @@ const getHandle = async (
     ? handle[handle.length - 1]
     : undefined;
 };
-const putObject = async (
+const deleteObject = async (Bucket: FileSystemDirectoryHandle, Key: string) => {
+    const keys = Key.split("/"),
+      name = keys.pop();
+    if (name) {
+      const handle = await getHandle(Bucket, keys.join("/"));
+      if (handle?.kind === "directory") await handle.removeEntry(name);
+    }
+  },
+  getObjectBlob = async (Bucket: FileSystemDirectoryHandle, Key: string) => {
+    const handle = await getHandle(Bucket, Key);
+    if (handle?.kind === "file") return handle.getFile();
+    return new Blob();
+  },
+  getObjectText = async (Bucket: FileSystemDirectoryHandle, Key: string) =>
+    (await getObjectBlob(Bucket, Key)).text(),
+  headObject = async (Bucket: FileSystemDirectoryHandle, Key: string) => {
+    const handle = await getHandle(Bucket, Key);
+    if (handle?.kind === "file") return undefined;
+    throw new Error("It's not a file");
+  },
+  putObject = async (
     Bucket: FileSystemDirectoryHandle,
     Key: string,
     body: StreamingBlobPayloadInputTypes,
@@ -84,35 +104,15 @@ const putObject = async (
     await Promise.allSettled(
       values.map(({ name }) => directory.removeEntry(name)),
     );
-  },
-  deleteObject = async (Bucket: FileSystemDirectoryHandle, Key: string) => {
-    const keys = Key.split("/"),
-      name = keys.pop();
-    if (name) {
-      const handle = await getHandle(Bucket, keys.join("/"));
-      if (handle?.kind === "directory") await handle.removeEntry(name);
-    }
-  },
-  headObject = async (Bucket: FileSystemDirectoryHandle, Key: string) => {
-    const handle = await getHandle(Bucket, Key);
-    if (handle?.kind === "file") return undefined;
-    throw new Error("It's not a file");
-  },
-  getObjectBlob = async (Bucket: FileSystemDirectoryHandle, Key: string) => {
-    const handle = await getHandle(Bucket, Key);
-    if (handle?.kind === "file") return handle.getFile();
-    return new Blob();
-  },
-  getObjectText = async (Bucket: FileSystemDirectoryHandle, Key: string) =>
-    (await getObjectBlob(Bucket, Key)).text();
+  };
 
 /* -------------------------------------------------------------------------- */
 
 export {
-  removeEmptyDirectories,
+  deleteObject,
   getObjectBlob,
   getObjectText,
-  deleteObject,
   headObject,
   putObject,
+  removeEmptyDirectories,
 };

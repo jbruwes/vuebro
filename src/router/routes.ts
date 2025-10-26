@@ -5,8 +5,8 @@ import HomePage from "pages/HomePage.vue";
 /* -------------------------------------------------------------------------- */
 
 const component = HomePage as Component,
-  path = "/:pathMatch(.*)*",
-  name = "Home";
+  name = "Home",
+  path = "/:pathMatch(.*)*";
 
 /* -------------------------------------------------------------------------- */
 /*                                   Exports                                  */

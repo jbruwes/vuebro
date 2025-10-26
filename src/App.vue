@@ -75,31 +75,65 @@ q-layout(view="hHh Lpr lff")
 <script setup lang="ts">
 import type { TFeed } from "@vuebro/shared";
 
-import VImportmapDialog from "components/dialogs/VImportmapDialog.vue";
-import VFaviconDialog from "components/dialogs/VFaviconDialog.vue";
-import VFontsDialog from "components/dialogs/VFontsDialog.vue";
-import VFeedDialog from "components/dialogs/VFeedDialog.vue";
-import { getObjectText, putObject, bucket } from "stores/io";
-import { importmap, fonts, feed } from "@vuebro/shared";
-import { persistent, cache } from "stores/defaults";
-import { rightDrawer, domain } from "stores/app";
+import { feed, fonts, importmap } from "@vuebro/shared";
 import { useStorage } from "@vueuse/core";
+import VFaviconDialog from "components/dialogs/VFaviconDialog.vue";
+import VFeedDialog from "components/dialogs/VFeedDialog.vue";
+import VFontsDialog from "components/dialogs/VFontsDialog.vue";
+import VImportmapDialog from "components/dialogs/VImportmapDialog.vue";
+import { consola } from "consola/browser";
+import mime from "mime";
+import { useQuasar } from "quasar";
 // eslint-disable-next-line import-x/no-unresolved
 import "virtual:uno.css";
-import { consola } from "consola/browser";
-import { useQuasar } from "quasar";
+import { domain, rightDrawer } from "stores/app";
+import { cache, persistent } from "stores/defaults";
+import { bucket, getObjectText, putObject } from "stores/io";
 import { useI18n } from "vue-i18n";
-import mime from "mime";
 
-const ai = useStorage("apiKey", ""),
-  { t } = useI18n(),
-  $q = useQuasar(),
-  cancel = true;
+const $q = useQuasar(),
+  ai = useStorage("apiKey", ""),
+  cancel = true,
+  { t } = useI18n();
 
-const clickFeed = () => {
+const clickAI = () => {
     $q.dialog({
-      componentProps: { persistent: true, feed },
+      cancel,
+      html: true,
+      message: `${t("Get Mistral API Key")} at <a class="underline text-blue" href="https://console.mistral.ai/api-keys" target="_blank" rel="noreferrer">https://console.mistral.ai/api-keys</a>`,
+      persistent,
+      prompt: {
+        hint: t("paste Mistral API Key only on a trusted computer"),
+        model: ai.value,
+        type: "password",
+      },
+      title: "Mistral API Key",
+    }).onOk((data: string) => {
+      ai.value = data;
+    });
+  },
+  clickDomain = () => {
+    $q.dialog({
+      cancel,
+      message: t("Enter a valid domain name:"),
+      persistent,
+      prompt: {
+        isValid: (val) =>
+          !val ||
+          /\b((?=[a-z0-9-]{1,63}\.)(xn--)?[a-z0-9]+(-[a-z0-9]+)*\.)+[a-z]{2,63}\b/.test(
+            val,
+          ),
+        model: domain.value,
+      },
+      title: t("Domain"),
+    }).onOk((data: string) => {
+      domain.value = data;
+    });
+  },
+  clickFeed = () => {
+    $q.dialog({
       component: VFeedDialog,
+      componentProps: { feed, persistent: true },
     }).onOk((data: TFeed["items"]) => {
       feed.items = data
         .filter(({ title }) => title)
@@ -120,69 +154,35 @@ const clickFeed = () => {
         .reverse();
     });
   },
-  clickAI = () => {
+  clickFonts = () => {
     $q.dialog({
-      message: `${t("Get Mistral API Key")} at <a class="underline text-blue" href="https://console.mistral.ai/api-keys" target="_blank" rel="noreferrer">https://console.mistral.ai/api-keys</a>`,
-      prompt: {
-        hint: t("paste Mistral API Key only on a trusted computer"),
-        type: "password",
-        model: ai.value,
-      },
-      title: "Mistral API Key",
-      html: true,
-      persistent,
-      cancel,
-    }).onOk((data: string) => {
-      ai.value = data;
+      component: VFontsDialog,
+      componentProps: { fonts, persistent: true },
+    }).onOk((data: string[]) => {
+      fonts.length = 0;
+      fonts.push(...data);
+    });
+  },
+  clickImportmap = () => {
+    $q.dialog({
+      component: VImportmapDialog,
+      componentProps: { importmap, persistent: true },
+    }).onOk((data: Record<string, string>) => {
+      importmap.imports = data;
     });
   },
   clickRobots = async () => {
     const title = "robots.txt";
     $q.dialog({
+      cancel,
       message: t(
         "Robots.txt is a text file that contains site indexing parameters for the search engine robots",
       ),
-      prompt: { model: await getObjectText(title, cache), type: "textarea" },
       persistent,
-      cancel,
+      prompt: { model: await getObjectText(title, cache), type: "textarea" },
       title,
     }).onOk((data: string) => {
       putObject(title, data, "text/plain").catch(consola.error);
-    });
-  },
-  clickDomain = () => {
-    $q.dialog({
-      prompt: {
-        isValid: (val) =>
-          !val ||
-          /\b((?=[a-z0-9-]{1,63}\.)(xn--)?[a-z0-9]+(-[a-z0-9]+)*\.)+[a-z]{2,63}\b/.test(
-            val,
-          ),
-        model: domain.value,
-      },
-      message: t("Enter a valid domain name:"),
-      title: t("Domain"),
-      persistent,
-      cancel,
-    }).onOk((data: string) => {
-      domain.value = data;
-    });
-  },
-  clickImportmap = () => {
-    $q.dialog({
-      componentProps: { persistent: true, importmap },
-      component: VImportmapDialog,
-    }).onOk((data: Record<string, string>) => {
-      importmap.imports = data;
-    });
-  },
-  clickFonts = () => {
-    $q.dialog({
-      componentProps: { persistent: true, fonts },
-      component: VFontsDialog,
-    }).onOk((data: string[]) => {
-      fonts.length = 0;
-      fonts.push(...data);
     });
   };
 </script>

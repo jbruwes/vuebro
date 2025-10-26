@@ -7,7 +7,7 @@ import { bucket } from "stores/io";
 export default defineBoot(({ router }) => {
   const [route] = routes;
   router.beforeEach(({ path }, _from, next) => {
-    if (["/main", "/"].includes(path)) next();
+    if (["/", "/main"].includes(path)) next();
     else next("/");
     if (path === "/" && route) {
       bucket.value = "";

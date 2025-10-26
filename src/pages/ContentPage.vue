@@ -256,84 +256,104 @@ q-page.column.full-height.bg-light(v-else)
     q-spinner-hourglass
 </template>
 <script setup lang="ts">
-import type { IconNameArray } from "@quasar/quasar-ui-qiconpicker";
 import type { MistralProvider } from "@ai-sdk/mistral";
-import type { ComponentPublicInstance } from "vue";
-import type { RemovableRef } from "@vueuse/core";
-import type { ValidationRule } from "quasar";
+import type { IconNameArray } from "@quasar/quasar-ui-qiconpicker";
 import type { TLog } from "@vuebro/shared";
+import type { RemovableRef } from "@vueuse/core";
 import type { ModelMessage } from "ai";
+import type { ValidationRule } from "quasar";
+import type { ComponentPublicInstance } from "vue";
 
+import { createMistral } from "@ai-sdk/mistral";
+import { Icon } from "@iconify/vue";
+import mdi from "@quasar/quasar-ui-qiconpicker/src/components/icon-set/mdi-v6";
+import { importmap, nodes, pages, validateLog } from "@vuebro/shared";
+import { useStorage } from "@vueuse/core";
 import {
-  mergeDefaults,
-  itemsPerPage,
-  persistent,
-  immediate,
+  extractReasoningMiddleware,
+  generateText,
+  wrapLanguageModel,
+} from "ai";
+import changefreq from "assets/changefreq.json";
+import types from "assets/types.json";
+import VImages from "components/VImages.vue";
+import VInteractiveTree from "components/VInteractiveTree.vue";
+import VWysiwyg from "components/VWysiwyg.vue";
+import dompurify from "dompurify";
+import { marked } from "marked";
+import markedShiki from "marked-shiki";
+import { useQuasar } from "quasar";
+import { createHighlighter } from "shiki";
+import VSourceCode from "src/components/VSourceCode.vue";
+import { rightDrawer, the } from "stores/app";
+import {
   cancel,
   deep,
   html,
+  immediate,
+  itemsPerPage,
+  mergeDefaults,
   once,
   page,
+  persistent,
 } from "stores/defaults";
-import {
-  extractReasoningMiddleware,
-  wrapLanguageModel,
-  generateText,
-} from "ai";
-import mdi from "@quasar/quasar-ui-qiconpicker/src/components/icon-set/mdi-v6";
-import { validateLog, importmap, nodes, pages } from "@vuebro/shared";
-import { useTemplateRef, computed, nextTick, watch, ref } from "vue";
-import VInteractiveTree from "components/VInteractiveTree.vue";
-import VSourceCode from "src/components/VSourceCode.vue";
-import { createMistral } from "@ai-sdk/mistral";
-import changefreq from "assets/changefreq.json";
-import VWysiwyg from "components/VWysiwyg.vue";
-import { rightDrawer, the } from "stores/app";
-import VImages from "components/VImages.vue";
-import { useStorage } from "@vueuse/core";
-import { createHighlighter } from "shiki";
-import markedShiki from "marked-shiki";
-import types from "assets/types.json";
-import { Icon } from "@iconify/vue";
-import { useQuasar } from "quasar";
+import { computed, nextTick, ref, useTemplateRef, watch } from "vue";
 import { useI18n } from "vue-i18n";
-import dompurify from "dompurify";
-import { marked } from "marked";
 
-const clipboard = async (data: string) => {
+const $q = useQuasar(),
+  apiKey = useStorage("apiKey", ""),
+  chatMessages = useTemplateRef<ComponentPublicInstance[]>("chatMessages"),
+  clipboard = async (data: string) => {
     await navigator.clipboard.write([
       new ClipboardItem({
-        "text/plain": new Blob([data], { type: "text/plain" }),
         "text/html": new Blob([data], { type: "text/html" }),
+        "text/plain": new Blob([data], { type: "text/plain" }),
       }),
     ]);
   },
+  defaults = () => {
+    const value = {} as TLog;
+    validateLog?.(value) as boolean;
+    return value;
+  },
+  drawerTab = ref("seo"),
+  filter = ref(""),
+  highlighter = await createHighlighter({
+    langs: ["vue", "json", "jsx", "tsx", "html"],
+    themes: ["dark-plus", "light-plus"],
+  }),
   icon = computed({
-    set(value: undefined | string) {
-      if (value && the.value) the.value.icon = value.replace(/^mdi-/, "mdi:");
-    },
     get() {
       return the.value?.icon?.replace(/^mdi:/, "mdi-");
     },
-  }),
-  loc = computed({
-    set(value: string | null) {
-      if (the.value)
-        the.value.loc = value?.replace(/((?=(\/+))\2)$|(^\/+)/g, "") ?? null;
+    set(value: string | undefined) {
+      if (value && the.value) the.value.icon = value.replace(/^mdi-/, "mdi:");
     },
+  }),
+  id = computed(() => nodes[0]?.id ?? ""),
+  jsonldRef = useTemplateRef<InstanceType<typeof VSourceCode>>("jsonldRef"),
+  length = 20,
+  list = ref<{ content: string[]; role: string }[]>([]),
+  loc = computed({
     get() {
       return the.value?.loc ?? null;
+    },
+    set(value: null | string) {
+      if (the.value)
+        the.value.loc = value?.replace(/((?=(\/+))\2)$|(^\/+)/g, "") ?? null;
     },
   }),
   markedWithShiki = marked.use(
     markedShiki({
       highlight: (code, lang) =>
         highlighter.codeToHtml(code, {
-          theme: "light-plus",
           lang,
+          theme: "light-plus",
         }),
     }),
   ),
+  message = ref(""),
+  pagination = ref({ itemsPerPage, page }),
   scrollToEnd = () => {
     (
       chatMessages.value?.[chatMessages.value.length - 1]?.$el as
@@ -341,40 +361,37 @@ const clipboard = async (data: string) => {
         | undefined
     )?.scrollIntoView();
   },
-  highlighter = await createHighlighter({
-    langs: ["vue", "json", "jsx", "tsx", "html"],
-    themes: ["dark-plus", "light-plus"],
-  }),
+  tab = ref("wysiwyg"),
   technologies = computed(() => [
     "tailwindcss",
     ...Object.keys(importmap.imports).filter((value) => value !== "vue"),
   ]),
-  defaults = () => {
-    const value = {} as TLog;
-    validateLog?.(value) as boolean;
-    return value;
-  },
-  jsonldRef = useTemplateRef<InstanceType<typeof VSourceCode>>("jsonldRef"),
-  chatMessages = useTemplateRef<ComponentPublicInstance[]>("chatMessages"),
   vueRef = useTemplateRef<InstanceType<typeof VSourceCode>>("vueRef"),
-  list = ref<{ content: string[]; role: string }[]>([]),
   { icons } = mdi as Record<"icons", IconNameArray>,
-  pagination = ref({ itemsPerPage, page }),
-  id = computed(() => nodes[0]?.id ?? ""),
-  apiKey = useStorage("apiKey", ""),
-  drawerTab = ref("seo"),
-  tab = ref("wysiwyg"),
-  message = ref(""),
-  { t } = useI18n(),
-  $q = useQuasar(),
-  filter = ref(""),
-  length = 20;
+  { t } = useI18n();
 
-let mistral: MistralProvider | undefined,
+let initialDrawerWidth = 300,
   log: RemovableRef<TLog> | undefined,
-  initialDrawerWidth = 300;
+  mistral: MistralProvider | undefined;
 
-const initLog = () => {
+const clickAI = () => {
+    $q.dialog({
+      cancel,
+      html,
+      message: `${t("Get Mistral API Key")} at <a class="underline text-blue" href="https://console.mistral.ai/api-keys" target="_blank" rel="noreferrer">https://console.mistral.ai/api-keys</a>`,
+      persistent,
+      prompt: {
+        hint: t("paste Mistral API Key only on a trusted computer"),
+        model: apiKey.value,
+        type: "password",
+      },
+      title: "Mistral API Key",
+    }).onOk((data: string) => {
+      apiKey.value = data;
+    });
+  },
+  drawerWidth = ref(initialDrawerWidth),
+  initLog = () => {
     log = useStorage(id, defaults, localStorage, { mergeDefaults });
     watch(
       () => [...(log?.value.messages ?? [])],
@@ -396,24 +413,19 @@ const initLog = () => {
           scrollToEnd();
         }
       },
-      { flush: "post", immediate, deep },
+      { deep, flush: "post", immediate },
     );
   },
-  clickAI = () => {
-    $q.dialog({
-      message: `${t("Get Mistral API Key")} at <a class="underline text-blue" href="https://console.mistral.ai/api-keys" target="_blank" rel="noreferrer">https://console.mistral.ai/api-keys</a>`,
-      prompt: {
-        hint: t("paste Mistral API Key only on a trusted computer"),
-        model: apiKey.value,
-        type: "password",
-      },
-      title: "Mistral API Key",
-      persistent,
-      cancel,
-      html,
-    }).onOk((data: string) => {
-      apiKey.value = data;
-    });
+  resizeDrawer = ({
+    isFirst,
+    offset: { x },
+  }: {
+    isFirst: boolean;
+    offset: { x: number };
+  }) => {
+    if (isFirst) initialDrawerWidth = drawerWidth.value;
+    const width = initialDrawerWidth - x;
+    if (width > 300) drawerWidth.value = width;
   },
   rules: ValidationRule[] = [
     (v) =>
@@ -424,22 +436,10 @@ const initLog = () => {
           (element.id !== the.value?.id && element.loc === v),
       ) ||
       t("That name is already in use"),
-    (v: string | null) =>
+    (v: null | string) =>
       !["?", "\\", "#"].some((value) => v?.includes(value)) ||
       t("Prohibited characters are used"),
-  ],
-  resizeDrawer = ({
-    offset: { x },
-    isFirst,
-  }: {
-    offset: { x: number };
-    isFirst: boolean;
-  }) => {
-    if (isFirst) initialDrawerWidth = drawerWidth.value;
-    const width = initialDrawerWidth - x;
-    if (width > 300) drawerWidth.value = width;
-  },
-  drawerWidth = ref(initialDrawerWidth);
+  ];
 
 if (id.value) initLog();
 else watch(id, initLog, { once });
@@ -466,20 +466,20 @@ const send = async () => {
       if (text)
         content.unshift({ text: `\`\`\`json\n${text}\n\`\`\``, type: "text" });
     }
-    messages.unshift({ role: "user", content });
+    messages.unshift({ content, role: "user" });
     message.value = "";
     if (messages.length > length) messages.length = length;
     try {
       const { text } = await generateText({
+        messages: messages.toReversed() as ModelMessage[],
         model: wrapLanguageModel({
           middleware: extractReasoningMiddleware({ tagName: "think" }),
           model: mistral("magistral-medium-latest"),
         }),
-        messages: messages.toReversed() as ModelMessage[],
         system,
       });
       messages.unshift({
-        content: [{ type: "text", text }],
+        content: [{ text, type: "text" }],
         role: "assistant",
       });
     } catch (err) {

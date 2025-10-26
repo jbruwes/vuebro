@@ -1,33 +1,21 @@
 import type { StreamingBlobPayloadInputTypes } from "@smithy/types";
 
-import {
-  writeFile,
-  readFile,
-  readdir,
-  access,
-  unlink,
-  lstat,
-  mkdir,
-  rmdir,
-} from "fs/promises";
-import { basename, dirname, join } from "path";
 import { dialog } from "@electron/remote";
 import { contextBridge } from "electron";
+import {
+  access,
+  lstat,
+  mkdir,
+  readdir,
+  readFile,
+  rmdir,
+  unlink,
+  writeFile,
+} from "fs/promises";
+import { basename, dirname, join } from "path";
 
-const removeEmptyDirectories = async (directory: string, exclude: string[]) => {
-    const fileStats = await lstat(directory);
-    if (!fileStats.isDirectory() || exclude.includes(basename(directory)))
-      return;
-    let fileNames = await readdir(directory);
-    if (fileNames.length) {
-      await Promise.all(
-        fileNames.map((fileName) =>
-          removeEmptyDirectories(join(directory, fileName), exclude),
-        ),
-      );
-      fileNames = await readdir(directory);
-    }
-    if (!fileNames.length) await rmdir(directory);
+const deleteObject = async (Bucket: string, Key: string) => {
+    await unlink(join(Bucket, Key));
   },
   getObject = async (Bucket: string, Key: string) => {
     try {
@@ -41,6 +29,15 @@ const removeEmptyDirectories = async (directory: string, exclude: string[]) => {
     }
     return new Response();
   },
+  getObjectBlob = async (Bucket: string, Key: string) =>
+    (await getObject(Bucket, Key)).blob(),
+  getObjectText = async (Bucket: string, Key: string) =>
+    (await getObject(Bucket, Key)).text(),
+  headObject = async (Bucket: string, Key: string) => {
+    const stats = await lstat(join(Bucket, Key));
+    if (stats.isFile()) return undefined;
+    throw new Error("It's not a file");
+  },
   putObject = async (
     Bucket: string,
     Key: string,
@@ -53,29 +50,32 @@ const removeEmptyDirectories = async (directory: string, exclude: string[]) => {
     } catch {
       await mkdir(dirName, { recursive: true });
     }
-    await writeFile(filePath, body as Uint8Array | string);
+    await writeFile(filePath, body as string | Uint8Array);
   },
-  headObject = async (Bucket: string, Key: string) => {
-    const stats = await lstat(join(Bucket, Key));
-    if (stats.isFile()) return undefined;
-    throw new Error("It's not a file");
-  },
-  deleteObject = async (Bucket: string, Key: string) => {
-    await unlink(join(Bucket, Key));
-  },
-  getObjectBlob = async (Bucket: string, Key: string) =>
-    (await getObject(Bucket, Key)).blob(),
-  getObjectText = async (Bucket: string, Key: string) =>
-    (await getObject(Bucket, Key)).text();
+  removeEmptyDirectories = async (directory: string, exclude: string[]) => {
+    const fileStats = await lstat(directory);
+    if (!fileStats.isDirectory() || exclude.includes(basename(directory)))
+      return;
+    let fileNames = await readdir(directory);
+    if (fileNames.length) {
+      await Promise.all(
+        fileNames.map((fileName) =>
+          removeEmptyDirectories(join(directory, fileName), exclude),
+        ),
+      );
+      fileNames = await readdir(directory);
+    }
+    if (!fileNames.length) await rmdir(directory);
+  };
 
 Object.entries({
-  removeEmptyDirectories,
+  deleteObject,
+  dialog,
   getObjectBlob,
   getObjectText,
-  deleteObject,
   headObject,
   putObject,
-  dialog,
+  removeEmptyDirectories,
 }).forEach(([apiKey, api]) => {
   contextBridge.exposeInMainWorld(apiKey, api);
 });

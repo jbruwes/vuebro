@@ -75,21 +75,21 @@ q-dialog(ref="dialogRef", @hide="onDialogHide")
 <script setup lang="ts">
 import type { QInput } from "quasar";
 
-import { configurable, enumerable, writable } from "stores/defaults";
-import { useDialogPluginComponent, useQuasar } from "quasar";
-import { useTemplateRef, triggerRef, ref } from "vue";
 import endpoints from "assets/endpoints.json";
 import regions from "assets/regions.json";
-import { credential } from "stores/s3";
-import { useI18n } from "vue-i18n";
 import CryptoJS from "crypto-js";
+import { useDialogPluginComponent, useQuasar } from "quasar";
+import { configurable, enumerable, writable } from "stores/defaults";
+import { credential } from "stores/s3";
+import { ref, triggerRef, useTemplateRef } from "vue";
+import { useI18n } from "vue-i18n";
 
-const { model = undefined, pin = undefined } = defineProps<{
+const { dialogRef, onDialogCancel, onDialogHide, onDialogOK } =
+    useDialogPluginComponent(),
+  { model = undefined, pin = undefined } = defineProps<{
     model?: string;
     pin?: string;
   }>(),
-  { onDialogCancel, onDialogHide, onDialogOK, dialogRef } =
-    useDialogPluginComponent(),
   { t } = useI18n();
 
 const decrypt = (value?: string) =>
@@ -97,17 +97,17 @@ const decrypt = (value?: string) =>
     ? CryptoJS.AES.decrypt(value ?? "", pin).toString(CryptoJS.enc.Utf8)
     : (value ?? null);
 
-const cred = credential.value[model ?? ""],
-  secretAccessKey = ref(decrypt(cred?.secretAccessKey ?? undefined)),
+const $q = useQuasar(),
+  cred = credential.value[model ?? ""],
   accessKeyId = ref(decrypt(cred?.accessKeyId ?? undefined)),
-  endpoint = ref(decrypt(cred?.endpoint ?? undefined)),
   Bucket = ref(decrypt(cred?.Bucket ?? undefined)),
-  region = ref(decrypt(cred?.region ?? undefined)),
   bucketRef = useTemplateRef<QInput>("bucketRef"),
+  endpoint = ref(decrypt(cred?.endpoint ?? undefined)),
   isPwd = ref(true),
-  $q = useQuasar();
+  region = ref(decrypt(cred?.region ?? undefined)),
+  secretAccessKey = ref(decrypt(cred?.secretAccessKey ?? undefined));
 
-const click = (value: Record<string, string | null>) => {
+const click = (value: Record<string, null | string>) => {
     if (Bucket.value)
       if (model !== Bucket.value && Reflect.has(credential.value, Bucket.value))
         $q.dialog({
@@ -120,14 +120,14 @@ const click = (value: Record<string, string | null>) => {
         Reflect.defineProperty(credential.value, Bucket.value, {
           configurable,
           enumerable,
-          writable,
           value,
+          writable,
         });
         triggerRef(credential);
         onDialogOK();
       }
   },
-  encrypt = (obj: Record<string, string | null>) =>
+  encrypt = (obj: Record<string, null | string>) =>
     pin
       ? Object.fromEntries(
           Object.entries(obj).map(([key, value]) => [
@@ -136,7 +136,7 @@ const click = (value: Record<string, string | null>) => {
           ]),
         )
       : obj,
-  getRegions = (value: string | null) => regions[(value ?? "") as keyof object];
+  getRegions = (value: null | string) => regions[(value ?? "") as keyof object];
 
 defineEmits([...useDialogPluginComponent.emits]);
 </script>

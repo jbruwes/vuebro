@@ -41,53 +41,41 @@
 <script setup lang="ts">
 import type { TPage } from "@vuebro/shared";
 
+import { useFileDialog } from "@vueuse/core";
+import mimes from "assets/mimes.json";
+import { consola } from "consola/browser";
+import { parse } from "path-browserify";
+import { useQuasar } from "quasar";
+import { the, urls } from "stores/app";
 import {
-  persistent,
+  accept,
+  capture,
   immediate,
   multiple,
-  capture,
-  accept,
+  persistent,
   reset,
 } from "stores/defaults";
 import { getObjectBlob, putObject } from "stores/io";
-import { useFileDialog } from "@vueuse/core";
-import { consola } from "consola/browser";
-import { parse } from "path-browserify";
-import { urls, the } from "stores/app";
-import mimes from "assets/mimes.json";
-import { useQuasar } from "quasar";
+import { ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
-import { watch, ref } from "vue";
 
 let index = 0;
 
 const { onChange, open } = useFileDialog({
-    multiple,
-    capture,
     accept,
+    capture,
+    multiple,
     reset,
   }),
   { t } = useI18n();
 
-const images = ref([] as TPage["images"]),
-  $q = useQuasar();
+const $q = useQuasar(),
+  images = ref([] as TPage["images"]);
 
-const remove = (i: number) => {
-    $q.dialog({
-      message: t("Do you really want to delete?"),
-      title: t("Confirm"),
-      cancel: true,
-      persistent,
-    }).onOk(() => {
-      images.value.splice(i, 1);
-    });
-  },
-  right = (i: number) => {
-    if (i < images.value.length - 1) {
-      const next = images.value[i + 1];
-      if (images.value[i] && next)
-        [images.value[i], images.value[i + 1]] = [next, images.value[i]];
-    }
+const add = (i: number) => {
+    const alt = "",
+      url = "";
+    images.value.splice(i + 1, 0, { alt, url });
   },
   copy = async (i: number) => {
     if (images.value[i]?.url) {
@@ -102,10 +90,22 @@ const remove = (i: number) => {
         [images.value[i - 1], images.value[i]] = [images.value[i], prev];
     }
   },
-  add = (i: number) => {
-    const alt = "",
-      url = "";
-    images.value.splice(i + 1, 0, { alt, url });
+  remove = (i: number) => {
+    $q.dialog({
+      cancel: true,
+      message: t("Do you really want to delete?"),
+      persistent,
+      title: t("Confirm"),
+    }).onOk(() => {
+      images.value.splice(i, 1);
+    });
+  },
+  right = (i: number) => {
+    if (i < images.value.length - 1) {
+      const next = images.value[i + 1];
+      if (images.value[i] && next)
+        [images.value[i], images.value[i + 1]] = [next, images.value[i]];
+    }
   },
   upload = (i: number) => {
     index = i;

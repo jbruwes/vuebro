@@ -29,13 +29,13 @@ q-dialog(ref="dialogRef", full-height, @hide="onDialogHide")
 </template>
 
 <script setup lang="ts">
-import { useDialogPluginComponent } from "quasar";
-import { atlas, nodes } from "@vuebro/shared";
 import { Icon } from "@iconify/vue";
+import { atlas, nodes } from "@vuebro/shared";
+import { useDialogPluginComponent } from "quasar";
 import { computed, ref } from "vue";
 import { useI18n } from "vue-i18n";
 
-const { onDialogCancel, onDialogHide, onDialogOK, dialogRef } =
+const { dialogRef, onDialogCancel, onDialogHide, onDialogOK } =
     useDialogPluginComponent(),
   { message, title } = defineProps<{
     message: string;
@@ -43,8 +43,8 @@ const { onDialogCancel, onDialogHide, onDialogOK, dialogRef } =
   }>(),
   { t } = useI18n();
 
-const the = computed(() => atlas.value[selected.value ?? ""]),
-  selected = ref<undefined | string>();
+const selected = ref<string | undefined>(),
+  the = computed(() => atlas.value[selected.value ?? ""]);
 
 defineEmits([...useDialogPluginComponent.emits]);
 

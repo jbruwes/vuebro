@@ -51,40 +51,75 @@ form.full-width.col.column(
 </template>
 <script setup lang="ts">
 import type {
-  QuasarLanguageEditorLabel,
-  QuasarIconSetEditor,
-  StringDictionary,
-  QEditorCommand,
   QEditor,
+  QEditorCommand,
+  QuasarIconSetEditor,
+  QuasarLanguageEditorLabel,
+  StringDictionary,
 } from "quasar";
 
-import {
-  bypassDefined,
-  persistent,
-  immediate,
-  accept,
-  reset,
-} from "stores/defaults";
-import { onUnmounted, onMounted, computed, nextTick, watch, ref } from "vue";
-import { getFontsObjectFromArray, fonts as Fonts } from "@vuebro/shared";
+import initUnocssRuntime from "@unocss/runtime";
+import presets from "@vuebro/configs/uno/presets";
+import { fonts as Fonts, getFontsObjectFromArray } from "@vuebro/shared";
+import { useFileDialog } from "@vueuse/core";
+import mimes from "assets/mimes.json";
 import VChipsInputDialog from "components/dialogs/VChipsInputDialog.vue";
 import VLinkDialog from "components/dialogs/VLinkDialog.vue";
-import presets from "@vuebro/configs/uno/presets";
-import initUnocssRuntime from "@unocss/runtime";
-import { useFileDialog } from "@vueuse/core";
 import { consola } from "consola/browser";
 import { parse } from "path-browserify";
-import mimes from "assets/mimes.json";
-import { putObject } from "stores/io";
 import { useQuasar } from "quasar";
-import { useI18n } from "vue-i18n";
 import { urls } from "stores/app";
+import {
+  accept,
+  bypassDefined,
+  immediate,
+  persistent,
+  reset,
+} from "stores/defaults";
+import { putObject } from "stores/io";
+import { computed, nextTick, onMounted, onUnmounted, ref, watch } from "vue";
+import { useI18n } from "vue-i18n";
 
-let rootElement: () => undefined | Element;
+let rootElement: () => Element | undefined;
 
 const { files, open } = useFileDialog({ accept, reset }),
   { t } = useI18n();
-const toolbar = computed(() => [
+const $q = useQuasar(),
+  blocks = ref(false),
+  editor = ref<QEditor>(),
+  fonts = computed(() => ({
+    ...getFontsObjectFromArray([
+      "Arial",
+      "Arial Black",
+      "Comic Sans",
+      "Courier New",
+      "Impact",
+      "Lucida Grande",
+      "Times New Roman",
+      "Verdana",
+    ]),
+    ...getFontsObjectFromArray(Fonts),
+  })),
+  props = withDefaults(
+    defineProps<{
+      id?: string | undefined;
+      modelValue?: Promise<string> | string;
+    }>(),
+    {
+      id: "",
+      modelValue: "",
+    },
+  ),
+  htm = ref(await props.modelValue),
+  inViewport = ref(false),
+  list = "no-icons",
+  placeholder = t("Add some content to your page..."),
+  scrollTarget = ref<Element>(),
+  show = ref(false),
+  srcElement = ref<boolean | Element>(true),
+  tagNameClassList = ref(""),
+  target = ref<boolean | Element>(false),
+  toolbar = computed(() => [
     ["left", "center", "right", "justify"],
     ["bold", "italic", "strike", "underline", "subscript", "superscript"],
     ["hr", "link"],
@@ -117,59 +152,24 @@ const toolbar = computed(() => [
           true,
         ],
       ].map(([key, options, fixedLabel, fixedIcon]) => ({
+        fixedIcon,
+        fixedLabel,
+        icon: $q.iconSet.editor[
+          key as keyof StringDictionary<QuasarIconSetEditor>
+        ],
         label:
           $q.lang.editor[
             key as keyof StringDictionary<QuasarLanguageEditorLabel>
           ],
-        icon: $q.iconSet.editor[
-          key as keyof StringDictionary<QuasarIconSetEditor>
-        ],
-        fixedLabel,
-        fixedIcon,
-        options,
         list,
+        options,
       })),
       "removeFormat",
     ],
     ["quote", "unordered", "ordered", "outdent", "indent"],
     ["undo", "redo"],
     ["wallpaper", "file_present"],
-  ]),
-  fonts = computed(() => ({
-    ...getFontsObjectFromArray([
-      "Arial",
-      "Arial Black",
-      "Comic Sans",
-      "Courier New",
-      "Impact",
-      "Lucida Grande",
-      "Times New Roman",
-      "Verdana",
-    ]),
-    ...getFontsObjectFromArray(Fonts),
-  })),
-  props = withDefaults(
-    defineProps<{
-      modelValue?: Promise<string> | string;
-      id?: undefined | string;
-    }>(),
-    {
-      modelValue: "",
-      id: "",
-    },
-  ),
-  placeholder = t("Add some content to your page..."),
-  srcElement = ref<boolean | Element>(true),
-  target = ref<boolean | Element>(false),
-  htm = ref(await props.modelValue),
-  scrollTarget = ref<Element>(),
-  tagNameClassList = ref(""),
-  editor = ref<QEditor>(),
-  inViewport = ref(false),
-  blocks = ref(false),
-  list = "no-icons",
-  show = ref(false),
-  $q = useQuasar();
+  ]);
 
 const definitions = {
   ...Object.fromEntries(
@@ -189,12 +189,12 @@ const definitions = {
         t("Insert Route"),
         () => {
           $q.dialog({
+            component: VLinkDialog,
             componentProps: {
               message: t("Select a page to insert the corresponding link"),
-              title: t("Internal Links"),
               persistent,
+              title: t("Internal Links"),
             },
-            component: VLinkDialog,
           }).onOk((value: string) => {
             editor.value?.runCmd("createLink", value);
           });
@@ -224,7 +224,8 @@ const definitions = {
   ),
 };
 
-const insertImage = (file: File) => {
+const emit = defineEmits(["update:modelValue"]),
+  insertImage = (file: File) => {
     const message = t(
         "The graphic file type is not suitable for use on the web",
       ),
@@ -246,27 +247,10 @@ const insertImage = (file: File) => {
       );
     } else $q.notify({ message });
   },
-  openClassDialog = () => {
-    if (typeof srcElement.value !== "boolean") {
-      const { classList = [] } = srcElement.value;
-      $q.dialog({
-        componentProps: {
-          message: t(
-            "The class global attribute is a list of the classes of the element, separated by whitespace",
-          ),
-          value: [...classList],
-          title: "class",
-          persistent,
-        },
-        component: VChipsInputDialog,
-      }).onOk((className: string[]) => {
-        if (typeof srcElement.value !== "boolean")
-          srcElement.value.className = className.join(" ");
-        emit("update:modelValue", scrollTarget.value?.innerHTML);
-      });
-    }
+  onContextmenu = (event: Event) => {
+    event.stopPropagation();
   },
-  onMouseover = ({ target: element, currentTarget }: Event) => {
+  onMouseover = ({ currentTarget, target: element }: Event) => {
     if (
       blocks.value &&
       element !== currentTarget &&
@@ -284,6 +268,26 @@ const insertImage = (file: File) => {
       target.value = element;
     } else target.value = false;
   },
+  openClassDialog = () => {
+    if (typeof srcElement.value !== "boolean") {
+      const { classList = [] } = srcElement.value;
+      $q.dialog({
+        component: VChipsInputDialog,
+        componentProps: {
+          message: t(
+            "The class global attribute is a list of the classes of the element, separated by whitespace",
+          ),
+          persistent,
+          title: "class",
+          value: [...classList],
+        },
+      }).onOk((className: string[]) => {
+        if (typeof srcElement.value !== "boolean")
+          srcElement.value.className = className.join(" ");
+        emit("update:modelValue", scrollTarget.value?.innerHTML);
+      });
+    }
+  },
   paste = (evt: ClipboardEvent | DragEvent) => {
     const { files = [] } =
       (evt as DragEvent).dataTransfer ??
@@ -294,11 +298,7 @@ const insertImage = (file: File) => {
       evt.stopPropagation();
       [...files].forEach(insertImage);
     }
-  },
-  onContextmenu = (event: Event) => {
-    event.stopPropagation();
-  },
-  emit = defineEmits(["update:modelValue"]);
+  };
 
 watch(files, (newFiles) => {
   if (newFiles) [...newFiles].forEach(insertImage);
@@ -325,12 +325,12 @@ onMounted(() => {
     Fonts,
     async (value) => {
       await initUnocssRuntime({
+        bypassDefined,
         defaults: {
           presets: presets({
             webFontsOptions: { fonts: getFontsObjectFromArray(value) },
           }),
         },
-        bypassDefined,
         rootElement,
       });
     },
