@@ -50,6 +50,7 @@ export default defineConfig(() => ({
     ],
   },
   css: ["app.css"],
+  devServer: { open: false },
   electron: {
     builder: {
       appId: "vuebro",

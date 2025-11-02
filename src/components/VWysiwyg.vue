@@ -66,6 +66,7 @@ import mimes from "assets/mimes.json";
 import VChipsInputDialog from "components/dialogs/VChipsInputDialog.vue";
 import VLinkDialog from "components/dialogs/VLinkDialog.vue";
 import { consola } from "consola/browser";
+import { ofetch as customFetch } from "ofetch";
 import { parse } from "path-browserify";
 import { useQuasar } from "quasar";
 import { urls } from "stores/app";
@@ -328,7 +329,10 @@ onMounted(() => {
         bypassDefined,
         defaults: {
           presets: presets({
-            webFontsOptions: { fonts: getFontsObjectFromArray(value) },
+            webFontsOptions: {
+              customFetch,
+              fonts: getFontsObjectFromArray(value),
+            },
           }),
         },
         rootElement,
