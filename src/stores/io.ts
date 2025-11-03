@@ -4,34 +4,62 @@ import * as fsa from "stores/fsa";
 import * as s3 from "stores/s3";
 import { ref, watch } from "vue";
 
-/* -------------------------------------------------------------------------- */
-
 const bucket = ref(""),
   remote = ref(false);
 
-/* -------------------------------------------------------------------------- */
-
 let fileSystemDirectoryHandle: FileSystemDirectoryHandle | undefined;
 
-/* -------------------------------------------------------------------------- */
-
+/**
+ * Returns the appropriate I/O interface based on whether we're using remote
+ * storage or local file system
+ *
+ * @returns {typeof s3 | Window} The S3 interface if remote, otherwise the
+ *   window object
+ */
 const io: () => typeof s3 | Window = () => (remote.value ? s3 : window);
+/**
+ * Deletes an object from storage (either S3 or the local file system)
+ *
+ * @param {string} Key - The key/path of the object to delete
+ * @returns {Promise<void>} A promise that resolves when the object is deleted
+ */
 const deleteObject = async (Key: string) => {
     if (bucket.value)
       if (fileSystemDirectoryHandle)
         await fsa.deleteObject(fileSystemDirectoryHandle, Key);
       else await io().deleteObject(bucket.value, Key);
   },
+  /**
+   * Gets an object as a Blob from storage (either S3 or the local file system)
+   *
+   * @param {string} Key - The key/path of the object to retrieve
+   * @param {string} [ResponseCacheControl] - Optional cache control header
+   * @returns {Promise<Blob>} The object as a Blob
+   */
   getObjectBlob = async (Key: string, ResponseCacheControl?: string) => {
     if (fileSystemDirectoryHandle)
       return fsa.getObjectBlob(fileSystemDirectoryHandle, Key);
     return io().getObjectBlob(bucket.value, Key, ResponseCacheControl);
   },
+  /**
+   * Gets an object as text from storage (either S3 or the local file system)
+   *
+   * @param {string} Key - The key/path of the object to retrieve
+   * @param {string} [ResponseCacheControl] - Optional cache control header
+   * @returns {Promise<string>} The object as text
+   */
   getObjectText = async (Key: string, ResponseCacheControl?: string) => {
     if (fileSystemDirectoryHandle)
       return fsa.getObjectText(fileSystemDirectoryHandle, Key);
     return io().getObjectText(bucket.value, Key, ResponseCacheControl);
   },
+  /**
+   * Checks if a bucket exists and sets the remote flag accordingly
+   *
+   * @param {string} Bucket - The name of the bucket to check
+   * @param {string | undefined} pin - Optional PIN for authentication
+   * @returns {Promise<void>} A promise that resolves when the check is complete
+   */
   headBucket = async (Bucket: string, pin: string | undefined) => {
     try {
       await s3.headBucket(Bucket, pin);
@@ -41,11 +69,27 @@ const deleteObject = async (Key: string) => {
       throw new Error(message);
     }
   },
+  /**
+   * Checks if an object exists in storage (either S3 or the local file system)
+   *
+   * @param {string} Key - The key/path of the object to check
+   * @param {string} [ResponseCacheControl] - Optional cache control header
+   * @returns {Promise<undefined>} Returns undefined if object exists, throws
+   *   error if not
+   */
   headObject = async (Key: string, ResponseCacheControl?: string) => {
     if (fileSystemDirectoryHandle)
       return fsa.headObject(fileSystemDirectoryHandle, Key);
     return io().headObject(bucket.value, Key, ResponseCacheControl);
   },
+  /**
+   * Puts an object into storage (either S3 or the local file system)
+   *
+   * @param {string} Key - The key/path to store the object at
+   * @param {StreamingBlobPayloadInputTypes} body - The content of the object
+   * @param {string} ContentType - The content type of the object
+   * @returns {Promise<void>} A promise that resolves when the object is stored
+   */
   putObject = async (
     Key: string,
     body: StreamingBlobPayloadInputTypes,
@@ -56,6 +100,12 @@ const deleteObject = async (Key: string) => {
         await fsa.putObject(fileSystemDirectoryHandle, Key, body);
       else await io().putObject(bucket.value, Key, body, ContentType);
   },
+  /**
+   * Removes empty directories from storage (either S3 or the local file system)
+   *
+   * @returns {Promise<void>} A promise that resolves when the operation is
+   *   complete
+   */
   removeEmptyDirectories = async () => {
     const exclude = ["node_modules", ".git"];
     if (bucket.value)
@@ -63,11 +113,14 @@ const deleteObject = async (Key: string) => {
         await fsa.removeEmptyDirectories(fileSystemDirectoryHandle, exclude);
       else await io().removeEmptyDirectories?.(bucket.value, exclude);
   },
+  /**
+   * Sets the file system directory handle for local file access
+   *
+   * @param {FileSystemDirectoryHandle} value - The directory handle to set
+   */
   setFileSystemDirectoryHandle = (value: FileSystemDirectoryHandle) => {
     fileSystemDirectoryHandle = value;
   };
-
-/* -------------------------------------------------------------------------- */
 
 watch(bucket, (value) => {
   if (!value) {
@@ -76,8 +129,6 @@ watch(bucket, (value) => {
     if (fileSystemDirectoryHandle) fileSystemDirectoryHandle = undefined;
   }
 });
-
-/* -------------------------------------------------------------------------- */
 
 export {
   bucket,
