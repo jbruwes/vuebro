@@ -303,6 +303,12 @@ import { useI18n } from "vue-i18n";
 const $q = useQuasar(),
   apiKey = useStorage("apiKey", ""),
   chatMessages = useTemplateRef<ComponentPublicInstance[]>("chatMessages"),
+  /**
+   * Copies data to the clipboard
+   *
+   * @param {string} data - The data to be copied to clipboard
+   * @returns {Promise<void>} A promise that resolves when the data is copied
+   */
   clipboard = async (data: string) => {
     await navigator.clipboard.write([
       new ClipboardItem({
@@ -311,6 +317,11 @@ const $q = useQuasar(),
       }),
     ]);
   },
+  /**
+   * Creates and returns a default log object
+   *
+   * @returns {TLog} A default log object
+   */
   defaults = () => {
     const value = {} as TLog;
     validateLog?.(value) as boolean;
@@ -323,9 +334,19 @@ const $q = useQuasar(),
     themes: ["dark-plus", "light-plus"],
   }),
   icon = computed({
+    /**
+     * Gets the icon value with MDI prefix replaced by MDI- format
+     *
+     * @returns {string | undefined} The formatted icon value
+     */
     get() {
       return the.value?.icon?.replace(/^mdi:/, "mdi-");
     },
+    /**
+     * Sets the icon value, converting MDI- format back to MDI: prefix
+     *
+     * @param {string | undefined} value - The icon value to set
+     */
     set(value: string | undefined) {
       if (value && the.value) the.value.icon = value.replace(/^mdi-/, "mdi:");
     },
@@ -335,9 +356,19 @@ const $q = useQuasar(),
   length = 20,
   list = ref<{ content: string[]; role: string }[]>([]),
   loc = computed({
+    /**
+     * Gets the location value
+     *
+     * @returns {string | null} The location value or null if not set
+     */
     get() {
       return the.value?.loc ?? null;
     },
+    /**
+     * Sets the location value, removing leading and trailing slashes
+     *
+     * @param {string | null} value - The location value to set
+     */
     set(value: null | string) {
       if (the.value)
         the.value.loc = value?.replace(/((?=(\/+))\2)$|(^\/+)/g, "") ?? null;
@@ -345,6 +376,13 @@ const $q = useQuasar(),
   }),
   markedWithShiki = marked.use(
     markedShiki({
+      /**
+       * Highlights code with syntax highlighting
+       *
+       * @param {string} code - The code to highlight
+       * @param {string} lang - The language of the code
+       * @returns {string} The highlighted HTML code
+       */
       highlight: (code, lang) =>
         highlighter.codeToHtml(code, {
           lang,
@@ -354,6 +392,9 @@ const $q = useQuasar(),
   ),
   message = ref(""),
   pagination = ref({ itemsPerPage, page }),
+  /**
+   * Scrolls to the end of the chat messages container
+   */
   scrollToEnd = () => {
     (
       chatMessages.value?.[chatMessages.value.length - 1]?.$el as
@@ -374,6 +415,9 @@ let initialDrawerWidth = 300,
   log: RemovableRef<TLog> | undefined,
   mistral: MistralProvider | undefined;
 
+/**
+ * Handles click event to open AI key dialog
+ */
 const clickAI = () => {
     $q.dialog({
       cancel,
@@ -391,6 +435,9 @@ const clickAI = () => {
     });
   },
   drawerWidth = ref(initialDrawerWidth),
+  /**
+   * Initializes the log for the current page
+   */
   initLog = () => {
     log = useStorage(id, defaults, localStorage, { mergeDefaults });
     watch(
@@ -416,6 +463,14 @@ const clickAI = () => {
       { deep, flush: "post", immediate },
     );
   },
+  /**
+   * Handles drawer resize events
+   *
+   * @param {object} params - The resize parameters
+   * @param {boolean} params.isFirst - Whether this is the first resize event
+   * @param {object} params.offset - The offset information
+   * @param {number} params.offset.x - The x offset value
+   */
   resizeDrawer = ({
     isFirst,
     offset: { x },
@@ -427,7 +482,16 @@ const clickAI = () => {
     const width = initialDrawerWidth - x;
     if (width > 300) drawerWidth.value = width;
   },
+  /**
+   * Validation rules for the form inputs
+   */
   rules: ValidationRule[] = [
+    /**
+     * Validates that the page name is unique
+     *
+     * @param {string | null} v - The value to validate
+     * @returns {boolean | string} True if valid, error message otherwise
+     */
     (v) =>
       !v ||
       !pages.value.find(
@@ -436,6 +500,12 @@ const clickAI = () => {
           (element.id !== the.value?.id && element.loc === v),
       ) ||
       t("That name is already in use"),
+    /**
+     * Validates that the page name doesn't contain prohibited characters
+     *
+     * @param {null | string} v - The value to validate
+     * @returns {boolean | string} True if valid, error message otherwise
+     */
     (v: null | string) =>
       !["?", "\\", "#"].some((value) => v?.includes(value)) ||
       t("Prohibited characters are used"),
@@ -452,6 +522,9 @@ watch(
   { immediate },
 );
 
+/**
+ * Sends a message to the AI assistant
+ */
 const send = async () => {
   if (mistral && log && message.value) {
     const content = [{ text: message.value, type: "text" }],
