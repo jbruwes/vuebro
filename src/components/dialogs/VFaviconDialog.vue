@@ -28,6 +28,12 @@ const { dialogRef, onDialogHide } = useDialogPluginComponent(),
 const $q = useQuasar(),
   uploader = useTemplateRef<null | QUploader>("uploader");
 
+/**
+ * Factory function to handle favicon uploads
+ *
+ * @param {readonly File[]} files - Array of files to upload
+ * @returns {Promise<never>} - Always returns a rejected promise
+ */
 const factory = async (files: readonly File[]) => {
   const [file] = files;
   let message = t("Favicon uploaded successfully");
