@@ -92,6 +92,12 @@ const { dialogRef, onDialogCancel, onDialogHide, onDialogOK } =
   }>(),
   { t } = useI18n();
 
+/**
+ * Decrypts a string value using AES encryption with the provided pin
+ *
+ * @param {string} [value] - The encrypted string to decrypt
+ * @returns {string | null} - The decrypted string or null if no pin is provided
+ */
 const decrypt = (value?: string) =>
   pin
     ? CryptoJS.AES.decrypt(value ?? "", pin).toString(CryptoJS.enc.Utf8)
@@ -107,6 +113,11 @@ const $q = useQuasar(),
   region = ref(decrypt(cred?.region ?? undefined)),
   secretAccessKey = ref(decrypt(cred?.secretAccessKey ?? undefined));
 
+/**
+ * Handles the click event when saving credentials
+ *
+ * @param {Record<string, null | string>} value - The credential object to save
+ */
 const click = (value: Record<string, null | string>) => {
     if (Bucket.value)
       if (model !== Bucket.value && Reflect.has(credential.value, Bucket.value))
@@ -127,6 +138,13 @@ const click = (value: Record<string, null | string>) => {
         onDialogOK();
       }
   },
+  /**
+   * Encrypts an object's values using AES encryption with the provided pin
+   *
+   * @param {Record<string, null | string>} obj - The object with values to
+   *   encrypt
+   * @returns {Record<string, null | string>} - The object with encrypted values
+   */
   encrypt = (obj: Record<string, null | string>) =>
     pin
       ? Object.fromEntries(
@@ -136,6 +154,12 @@ const click = (value: Record<string, null | string>) => {
           ]),
         )
       : obj,
+  /**
+   * Gets regions based on the provided endpoint value
+   *
+   * @param {null | string} value - The endpoint value to look up regions for
+   * @returns {string[]} - The list of regions for the given endpoint
+   */
   getRegions = (value: null | string) => regions[(value ?? "") as keyof object];
 
 defineEmits([...useDialogPluginComponent.emits]);
