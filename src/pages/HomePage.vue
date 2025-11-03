@@ -114,9 +114,17 @@ const $q = useQuasar(),
   ),
   router = useRouter();
 
+/**
+ * Opens the credentials dialog to add a new S3 account
+ */
 const add = () => {
     $q.dialog({ component: VCredsDialog, componentProps: { persistent } });
   },
+  /**
+   * Performs direct login with a bucket value
+   *
+   * @param {string} bucketValue - The bucket value to login with
+   */
   directLogin = (bucketValue: string) => {
     const name = "main",
       path = `/${name}`;
@@ -124,6 +132,10 @@ const add = () => {
     router.addRoute({ component: contentPage, name, path });
     router.push(path).catch(consola.error);
   },
+  /**
+   * Gets a directory from the user using either Electron dialog or File System
+   * Access API
+   */
   getDir = async () => {
     if ($q.platform.is.electron) {
       const {
@@ -145,6 +157,12 @@ const add = () => {
         $q.notify({ message });
       }
   },
+  /**
+   * Gets the PIN for a given S3 account
+   *
+   * @param {string} name - The name of the S3 account
+   * @returns {Promise<string | undefined>} The PIN or undefined if not needed
+   */
   getPin = async (name: string): Promise<string | undefined> =>
     new Promise((resolve, reject) => {
       if (name !== credential.value[name]?.Bucket) {
@@ -160,7 +178,17 @@ const add = () => {
           });
       } else resolve(undefined);
     }),
+  /**
+   * Checks if the File System Access API is available in the current browser
+   *
+   * @returns {boolean} True if File System Access API is available
+   */
   isFileSystemAccess = () => "showOpenFilePicker" in window,
+  /**
+   * Locks or unlocks an S3 account with a PIN
+   *
+   * @param {string} name - The name of the S3 account to lock/unlock
+   */
   lock = (name: string) => {
     $q.dialog({
       component: VOtpDialog,
@@ -190,6 +218,11 @@ const add = () => {
         }
     });
   },
+  /**
+   * Logs into an S3 account with the given bucket value
+   *
+   * @param {string} bucketValue - The bucket value to login with
+   */
   login = async (bucketValue: string) => {
     try {
       await headBucket(bucketValue, await getPin(bucketValue));
@@ -199,6 +232,11 @@ const add = () => {
       $q.notify({ message });
     }
   },
+  /**
+   * Removes an S3 account from the list
+   *
+   * @param {number | string} name - The name of the account to remove
+   */
   remove = (name: number | string) => {
     $q.dialog({
       cancel: true,
@@ -210,6 +248,11 @@ const add = () => {
     });
   };
 
+/**
+ * Edits an S3 account
+ *
+ * @param {number | string} name - The name of the S3 account to edit
+ */
 const edit = async (name: number | string) => {
   try {
     $q.dialog({
