@@ -96,6 +96,9 @@ const $q = useQuasar(),
   ),
   selected = ref<Record<string, string>[]>([]);
 
+/**
+ * Removes the selected rows after confirming with the user
+ */
 const removeRow = () => {
   if (selected.value.length)
     $q.dialog({
