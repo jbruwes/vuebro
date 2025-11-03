@@ -76,6 +76,9 @@ const $q = useQuasar(),
   rows = ref(fonts.map((name) => ({ id: uid(), name }))),
   selected = ref<Record<string, string>[]>([]);
 
+/**
+ * Removes the selected rows after confirming with the user
+ */
 const removeRow = () => {
   if (selected.value.length)
     $q.dialog({
