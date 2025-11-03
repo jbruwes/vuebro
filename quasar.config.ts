@@ -8,6 +8,12 @@ export default defineConfig(() => ({
   boot: ["main", "route", "quasar-lang-pack", "i18n", "monaco"],
   build: {
     alias: { "node:path": "path-browserify" },
+    /**
+     * Extends the Vite configuration
+     *
+     * @param {import("vite").UserConfig} config - The Vite configuration object
+     *   to extend
+     */
     extendViteConf: (config) => {
       config.base = "./";
       config.define = mergeConfig(
