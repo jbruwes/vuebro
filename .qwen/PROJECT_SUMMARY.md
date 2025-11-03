@@ -1,41 +1,50 @@
 # Project Summary
 
 ## Overall Goal
-Fix linting issues in VueBro project files, particularly addressing JSDoc comment requirements across various components and dialogs.
+Fix linting issues in the VueBro project files, specifically addressing JSDoc comments as required by the ESLint configuration across multiple components and dialog files.
 
 ## Key Knowledge
 - The project has a strict ESLint configuration requiring JSDoc comments for functions
 - Running `npm run lint [file] -- --fix` attempts to automatically fix linting issues
 - Proper JSDoc format includes @param with type and description, and @returns declaration when needed
-- Component dialog files are located in src/components/dialogs/
-- Multiple functions across different files needed proper parameter and return value documentation
-- Files that have been processed include: App.vue, monaco.ts, VCredsDialog.vue, VFaviconDialog.vue, VFeedDialog.vue, VFontsDialog.vue, VImportmapDialog.vue, VOtpDialog.vue, VImages.vue, VInteractiveTree.vue
-- The project uses Vue 3 with Quasar Framework, TypeScript, and Monaco Editor
+- Component dialog files are located in src/components/dialogs/, not in src/boot/components/dialogs/
+- Several functions across multiple files needed proper parameter and return value documentation
+- JSDoc comments must match the actual function signature parameters
+- Parameter types in JSDoc should be enclosed in curly braces like {number} or {ComponentPublicInstance | Element | null}
+- Some files had incorrect JSDoc parameter documentation that needed correction
+- Some files had the wrong parameter names in JSDoc comments compared to the actual function signatures
 
 ## Recent Actions
-- Fixed JSDoc warnings/errors in multiple dialog components (VCredsDialog.vue, VFaviconDialog.vue, VFeedDialog.vue, VFontsDialog.vue, VImportmapDialog.vue, VOtpDialog.vue)
-- Addressed missing JSDoc comments in VImages.vue for functions like add, copy, left, remove, right, and upload
-- Corrected JSDoc documentation in VInteractiveTree.vue for functions like clickAdd, error, errorMessage, and onIntersection
-- Successfully resolved lint issues in several files, ensuring they all pass linting without errors or warnings
-- Encountered and fixed circular fixes warnings by properly addressing the root JSDoc issues
-- Currently processing VSourceCode.vue which has 4 missing JSDoc errors
+- Fixed JSDoc issues in App.vue by adding proper documentation to all functions
+- Fixed JSDoc issues in monaco.ts by adding proper documentation to all functions
+- Fixed multiple JSDoc issues in VCredsDialog.vue across decrypt, click, encrypt, and getRegions functions
+- Fixed JSDoc issues in VFaviconDialog.vue by adding proper documentation to the factory function
+- Fixed JSDoc issues in VFeedDialog.vue in add, clickLink, clickOk, and removeRow functions
+- Fixed JSDoc issue in VFontsDialog.vue by adding proper documentation to removeRow function
+- Fixed JSDoc issue in VImportmapDialog.vue by adding proper documentation to removeRow function
+- Fixed multiple JSDoc issues in VOptDialog.vue in focus and updateFieldRef functions
+- Fixed JSDoc issues in VImages.vue by adding proper documentation to all functions (add, copy, left, remove, right, upload)
+- Fixed JSDoc issues in VInteractiveTree.vue by correcting parameter documentation for clickAdd and adding documentation for error, errorMessage, and onIntersection functions
+- Fixed multiple JSDoc issues in VSourceCode.vue by adding proper documentation to all functions (onMounted, watch functions, onError, requestHandler, getTokenStyleMetadata, getSelection)
+- Identified and corrected the typo in VWysiwig.vue (should be VWysiwyg.vue)
 
 ## Current Plan
-1. [TODO] Fix the 4 missing JSDoc comments in VSourceCode.vue at lines 65, 68, 85, and 116
-2. [IN PROGRESS] Address the circular fixes warning that appeared during the linting process
-3. [TODO] Verify VSourceCode.vue passes linting checks after fixes
-4. [TODO] Continue with any additional components that might need linting fixes
-5. [DONE] Fix linting issues in VCredsDialog.vue by adding required JSDoc comments
-6. [DONE] Fix linting issues in VFaviconDialog.vue by adding required JSDoc comments
-7. [DONE] Fix linting issues in VFeedDialog.vue by adding required JSDoc comments
-8. [DONE] Fix linting issues in VFontsDialog.vue by adding required JSDoc comments
-9. [DONE] Fix linting issues in VImportmapDialog.vue by adding required JSDoc comments
-10. [DONE] Confirm VLinkDialog.vue was already lint-free
-11. [DONE] Fix linting issues in VOtpDialog.vue by adding required JSDoc comments
-12. [DONE] Fix linting issues in VImages.vue by adding required JSDoc comments
-13. [DONE] Fix linting issues in VInteractiveTree.vue by correcting and adding required JSDoc comments
+1. [DONE] Fix linting issues in App.vue by adding required JSDoc comments
+2. [DONE] Fix linting issues in monaco.ts by adding required JSDoc comments
+3. [DONE] Fix linting issues in VCredsDialog.vue
+4. [DONE] Fix linting issues in VFaviconDialog.vue
+5. [DONE] Fix linting issues in VFeedDialog.vue
+6. [DONE] Fix linting issues in VFontsDialog.vue
+7. [DONE] Fix linting issues in VImportmapDialog.vue
+8. [DONE] Fix linting issues in VLinkDialog.vue (already lint-free)
+9. [DONE] Fix linting issues in VOptDialog.vue
+10. [DONE] Fix linting issues in VImages.vue
+11. [DONE] Fix linting issues in VInteractiveTree.vue
+12. [DONE] Fix linting issues in VSourceCode.vue
+13. [IN PROGRESS] Fix linting issues in VWysiwyg.vue
+14. [TODO] Run final verification to ensure all files pass linting checks without warnings
 
 ---
 
 ## Summary Metadata
-**Update time**: 2025-11-03T13:32:07.594Z 
+**Update time**: 2025-11-03T13:40:56.588Z 
