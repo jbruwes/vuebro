@@ -46,6 +46,21 @@ const deleted: Ref<TPage | undefined> = ref(),
 
     const index = await (await fetch("runtime/index.html")).text(),
       oldPages: Record<string, null | string | undefined>[] = [],
+      /**
+       * Handles the page putting operation
+       *
+       * @param {TAppPage} params - The page parameters
+       * @param {string} params.branch - The branch of the page
+       * @param {string} params.description - The description of the page
+       * @param {Array} params.images - The images associated with the page
+       * @param {Promise<editor.ITextModel>} params.jsonld - The JSON-LD model
+       * @param {string[]} params.keywords - Keywords for the page
+       * @param {string | null} params.loc - The location of the page
+       * @param {string} params.path - The path of the page
+       * @param {string} params.title - The title of the page
+       * @param {string} params.to - The destination of the page
+       * @param {string} params.type - The type of the page
+       */
       putPage = async ({
         branch,
         description,
@@ -201,6 +216,11 @@ ${JSON.stringify(imap, null, 1)}
 
 let descriptor: SFCDescriptor | undefined;
 
+/**
+ * Cleans up resources associated with pages
+ *
+ * @param {TAppPage[]} value - The array of pages to clean up
+ */
 const cleaner = (value: TAppPage[]) => {
     value.forEach((page) => {
       const { children, id, images } = page;
@@ -214,11 +234,27 @@ const cleaner = (value: TAppPage[]) => {
       }
     });
   },
+  /**
+   * Parses a string into an HTML document
+   *
+   * @param {string} value - The HTML string to parse
+   * @returns {Document} The parsed HTML document
+   */
   getDocument = (value: string) =>
     parser.parseFromString(
       `<head><base href="//"></head><body>${value}</body>`,
       "text/html",
     ),
+  /**
+   * Gets or creates a Monaco editor model
+   *
+   * @param {string} id - The ID of the model
+   * @param {string} ext - The file extension
+   * @param {string} language - The programming language
+   * @param {string} mime - The MIME type
+   * @param {string} init - The initial content
+   * @returns {Promise<editor.ITextModel>} The Monaco editor model
+   */
   getModel = async (
     id: string,
     ext: string,
@@ -228,6 +264,9 @@ const cleaner = (value: TAppPage[]) => {
   ) => {
     const uri = Uri.parse(`file:///${id}.${language}`);
     let model = editor.getModel(uri);
+    /**
+     * Initializes the object by saving model content to storage
+     */
     const initObject = async () => {
       if (model && id) {
         putObject(`pages/${id}.${ext}`, model.getValue(), mime).catch(
@@ -246,6 +285,11 @@ const cleaner = (value: TAppPage[]) => {
     return model;
   },
   html = {
+    /**
+     * Gets the HTML content for a page
+     *
+     * @returns {Promise<string>} The HTML content
+     */
     async get(this: TAppPage) {
       ({ descriptor } = parse((await this.sfc).getValue()));
       const { template } = descriptor;
@@ -282,6 +326,11 @@ const cleaner = (value: TAppPage[]) => {
       });
       return doc.body.innerHTML;
     },
+    /**
+     * Sets the HTML content for a page
+     *
+     * @param {string} value - The HTML string to set
+     */
     async set(this: TAppPage, value: string) {
       const doc = getDocument(value),
         sfc: editor.ITextModel = await this.sfc;
@@ -331,6 +380,11 @@ const cleaner = (value: TAppPage[]) => {
     },
   },
   jsonld = {
+    /**
+     * Gets the JSON-LD model for a page
+     *
+     * @returns {Promise<editor.ITextModel> | undefined} The JSON-LD model
+     */
     get(this: TAppPage) {
       return this.id
         ? getModel(this.id, "jsonld", "json", "application/ld+json", initJsonLD)
@@ -338,6 +392,11 @@ const cleaner = (value: TAppPage[]) => {
     },
   },
   sfc = {
+    /**
+     * Gets the SFC (Single File Component) model for a page
+     *
+     * @returns {Promise<editor.ITextModel> | undefined} The SFC model
+     */
     get(this: TAppPage) {
       return this.id
         ? getModel(this.id, "vue", "vue", "text/plain", "<template></template>")
