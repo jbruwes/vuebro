@@ -72,17 +72,33 @@ const { onChange, open } = useFileDialog({
 const $q = useQuasar(),
   images = ref([] as TPage["images"]);
 
+/**
+ * Adds a new image at the specified index
+ *
+ * @param {number} i - The index where to add the new image (-1 to add at the
+ *   end)
+ */
 const add = (i: number) => {
     const alt = "",
       url = "";
     images.value.splice(i + 1, 0, { alt, url });
   },
+  /**
+   * Copies the URL of the image at the specified index to clipboard
+   *
+   * @param {number} i - The index of the image to copy
+   */
   copy = async (i: number) => {
     if (images.value[i]?.url) {
       await navigator.clipboard.writeText(images.value[i].url);
       $q.notify({ message: t("The link has been copied to clipboard") });
     }
   },
+  /**
+   * Moves the image at the specified index to the left
+   *
+   * @param {number} i - The index of the image to move left
+   */
   left = (i: number) => {
     if (i) {
       const prev = images.value[i - 1];
@@ -90,6 +106,11 @@ const add = (i: number) => {
         [images.value[i - 1], images.value[i]] = [images.value[i], prev];
     }
   },
+  /**
+   * Removes the image at the specified index after confirming with the user
+   *
+   * @param {number} i - The index of the image to remove
+   */
   remove = (i: number) => {
     $q.dialog({
       cancel: true,
@@ -100,6 +121,11 @@ const add = (i: number) => {
       images.value.splice(i, 1);
     });
   },
+  /**
+   * Moves the image at the specified index to the right
+   *
+   * @param {number} i - The index of the image to move right
+   */
   right = (i: number) => {
     if (i < images.value.length - 1) {
       const next = images.value[i + 1];
@@ -107,6 +133,11 @@ const add = (i: number) => {
         [images.value[i], images.value[i + 1]] = [next, images.value[i]];
     }
   },
+  /**
+   * Opens the file upload dialog for the image at the specified index
+   *
+   * @param {number} i - The index of the image to upload
+   */
   upload = (i: number) => {
     index = i;
     open();
