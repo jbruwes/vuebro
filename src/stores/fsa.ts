@@ -1,16 +1,21 @@
-/* -------------------------------------------------------------------------- */
-
 import type { StreamingBlobPayloadInputTypes } from "@smithy/types";
 import type { RunSequentialPromisesFulfilledResult } from "quasar";
 
 import { runSequentialPromises } from "quasar";
 
-/* -------------------------------------------------------------------------- */
-
 const create = true;
 
-/* -------------------------------------------------------------------------- */
-
+/**
+ * Gets a file or directory handle from the file system
+ *
+ * @param {FileSystemDirectoryHandle} Bucket - The root directory handle
+ * @param {string} Key - The path to the file or directory
+ * @param {boolean} Create - Whether to create the directory if it doesn't exist
+ * @returns {Promise<
+ *   FileSystemDirectoryHandle | FileSystemFileHandle | undefined
+ * >}
+ *   The file or directory handle
+ */
 const getHandle = async (
   Bucket: FileSystemDirectoryHandle,
   Key: string,
@@ -51,6 +56,13 @@ const getHandle = async (
     ? handle[handle.length - 1]
     : undefined;
 };
+/**
+ * Deletes an object from the file system
+ *
+ * @param {FileSystemDirectoryHandle} Bucket - The root directory handle
+ * @param {string} Key - The path to the object to delete
+ * @returns {Promise<void>} A promise that resolves when the object is deleted
+ */
 const deleteObject = async (Bucket: FileSystemDirectoryHandle, Key: string) => {
     const keys = Key.split("/"),
       name = keys.pop();
@@ -59,18 +71,48 @@ const deleteObject = async (Bucket: FileSystemDirectoryHandle, Key: string) => {
       if (handle?.kind === "directory") await handle.removeEntry(name);
     }
   },
+  /**
+   * Gets an object as a Blob from the file system
+   *
+   * @param {FileSystemDirectoryHandle} Bucket - The root directory handle
+   * @param {string} Key - The path to the object
+   * @returns {Promise<Blob>} The object as a Blob
+   */
   getObjectBlob = async (Bucket: FileSystemDirectoryHandle, Key: string) => {
     const handle = await getHandle(Bucket, Key);
     if (handle?.kind === "file") return handle.getFile();
     return new Blob();
   },
+  /**
+   * Gets an object as text from the file system
+   *
+   * @param {FileSystemDirectoryHandle} Bucket - The root directory handle
+   * @param {string} Key - The path to the object
+   * @returns {Promise<string>} The object as text
+   */
   getObjectText = async (Bucket: FileSystemDirectoryHandle, Key: string) =>
     (await getObjectBlob(Bucket, Key)).text(),
+  /**
+   * Checks if an object exists in the file system
+   *
+   * @param {FileSystemDirectoryHandle} Bucket - The root directory handle
+   * @param {string} Key - The path to the object
+   * @returns {Promise<undefined>} Returns undefined if object exists, throws
+   *   error if not
+   */
   headObject = async (Bucket: FileSystemDirectoryHandle, Key: string) => {
     const handle = await getHandle(Bucket, Key);
     if (handle?.kind === "file") return undefined;
     throw new Error("It's not a file");
   },
+  /**
+   * Puts an object into the file system
+   *
+   * @param {FileSystemDirectoryHandle} Bucket - The root directory handle
+   * @param {string} Key - The path to store the object at
+   * @param {StreamingBlobPayloadInputTypes} body - The content of the object
+   * @returns {Promise<void>} A promise that resolves when the object is stored
+   */
   putObject = async (
     Bucket: FileSystemDirectoryHandle,
     Key: string,
@@ -88,6 +130,14 @@ const deleteObject = async (Bucket: FileSystemDirectoryHandle, Key: string) => {
       }
     }
   },
+  /**
+   * Removes empty directories from the file system
+   *
+   * @param {FileSystemDirectoryHandle} directory - The directory to process
+   * @param {string[]} exclude - Directories to exclude from removal
+   * @returns {Promise<void>} A promise that resolves when the operation is
+   *   complete
+   */
   removeEmptyDirectories = async (
     directory: FileSystemDirectoryHandle,
     exclude: string[],
@@ -105,8 +155,6 @@ const deleteObject = async (Bucket: FileSystemDirectoryHandle, Key: string) => {
       values.map(({ name }) => directory.removeEntry(name)),
     );
   };
-
-/* -------------------------------------------------------------------------- */
 
 export {
   deleteObject,
