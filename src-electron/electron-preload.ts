@@ -14,9 +14,23 @@ import {
 } from "fs/promises";
 import { basename, dirname, join } from "path";
 
+/**
+ * Deletes an object from the local file system
+ *
+ * @param {string} Bucket - The directory path (acts as a bucket)
+ * @param {string} Key - The file path relative to the directory
+ * @returns {Promise<void>} A promise that resolves when the file is deleted
+ */
 const deleteObject = async (Bucket: string, Key: string) => {
     await unlink(join(Bucket, Key));
   },
+  /**
+   * Gets an object from the local file system
+   *
+   * @param {string} Bucket - The directory path (acts as a bucket)
+   * @param {string} Key - The file path relative to the directory
+   * @returns {Promise<Response>} A response containing the file content
+   */
   getObject = async (Bucket: string, Key: string) => {
     try {
       const file = join(Bucket, Key);
@@ -29,15 +43,48 @@ const deleteObject = async (Bucket: string, Key: string) => {
     }
     return new Response();
   },
+  /**
+   * Gets an object as a Blob from the local file system
+   *
+   * @param {string} Bucket - The directory path (acts as a bucket)
+   * @param {string} Key - The file path relative to the directory
+   * @returns {Promise<Blob>} A promise that resolves with the file content as a
+   *   Blob
+   */
   getObjectBlob = async (Bucket: string, Key: string) =>
     (await getObject(Bucket, Key)).blob(),
+  /**
+   * Gets an object as text from the local file system
+   *
+   * @param {string} Bucket - The directory path (acts as a bucket)
+   * @param {string} Key - The file path relative to the directory
+   * @returns {Promise<string>} A promise that resolves with the file content as
+   *   text
+   */
   getObjectText = async (Bucket: string, Key: string) =>
     (await getObject(Bucket, Key)).text(),
+  /**
+   * Checks if an object exists in the local file system
+   *
+   * @param {string} Bucket - The directory path (acts as a bucket)
+   * @param {string} Key - The file path relative to the directory
+   * @returns {Promise<undefined>} A promise that resolves with undefined if the
+   *   file exists, or throws an error if it's not a file
+   */
   headObject = async (Bucket: string, Key: string) => {
     const stats = await lstat(join(Bucket, Key));
     if (stats.isFile()) return undefined;
     throw new Error("It's not a file");
   },
+  /**
+   * Puts an object into the local file system
+   *
+   * @param {string} Bucket - The directory path (acts as a bucket)
+   * @param {string} Key - The file path relative to the directory
+   * @param {StreamingBlobPayloadInputTypes} body - The content to write to the
+   *   file
+   * @returns {Promise<void>} A promise that resolves when the file is written
+   */
   putObject = async (
     Bucket: string,
     Key: string,
@@ -52,6 +99,14 @@ const deleteObject = async (Bucket: string, Key: string) => {
     }
     await writeFile(filePath, body as string | Uint8Array);
   },
+  /**
+   * Removes empty directories from the local file system
+   *
+   * @param {string} directory - The directory to process
+   * @param {string[]} exclude - Directories to exclude from removal
+   * @returns {Promise<void>} A promise that resolves when the operation is
+   *   complete
+   */
   removeEmptyDirectories = async (directory: string, exclude: string[]) => {
     const fileStats = await lstat(directory);
     if (!fileStats.isDirectory() || exclude.includes(basename(directory)))
