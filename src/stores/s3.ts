@@ -1,4 +1,7 @@
-import type { S3ClientConfig } from "@aws-sdk/client-s3";
+import type {
+  HeadObjectCommandOutput,
+  S3ClientConfig,
+} from "@aws-sdk/client-s3";
 import type { StreamingBlobPayloadInputTypes } from "@smithy/types";
 import type { TCredentials } from "@vuebro/shared";
 
@@ -31,13 +34,34 @@ const credential = useStorage(
   removeEmptyDirectories = undefined,
   requestHandler = new FetchHttpHandler();
 
+/**
+ * Sets or clears the S3 client instance
+ *
+ * @param {S3Client} [value] - The S3 client instance to set, or undefined to
+ *   clear
+ */
 const setS3Client = (value?: S3Client) => {
   s3Client?.destroy();
   s3Client = value;
 };
+/**
+ * Deletes an object from an S3 bucket
+ *
+ * @param {string} Bucket - The name of the S3 bucket
+ * @param {string} Key - The key of the object to delete
+ * @returns {Promise<void>} A promise that resolves when the object is deleted
+ */
 const deleteObject = async (Bucket: string, Key: string) => {
     await s3Client?.send(new DeleteObjectCommand({ Bucket, Key }));
   },
+  /**
+   * Gets an object from an S3 bucket
+   *
+   * @param {string} Bucket - The name of the S3 bucket
+   * @param {string} Key - The key of the object to retrieve
+   * @param {string} [ResponseCacheControl] - Optional cache control header
+   * @returns {Promise<Response>} The response containing the object
+   */
   getObject = async (
     Bucket: string,
     Key: string,
@@ -55,16 +79,39 @@ const deleteObject = async (Bucket: string, Key: string) => {
       }
     return new Response();
   },
+  /**
+   * Gets an object as a Blob from an S3 bucket
+   *
+   * @param {string} Bucket - The name of the S3 bucket
+   * @param {string} Key - The key of the object to retrieve
+   * @param {string} [ResponseCacheControl] - Optional cache control header
+   * @returns {Promise<Blob>} The object as a Blob
+   */
   getObjectBlob = async (
     Bucket: string,
     Key: string,
     ResponseCacheControl?: string,
   ) => (await getObject(Bucket, Key, ResponseCacheControl)).blob(),
+  /**
+   * Gets an object as text from an S3 bucket
+   *
+   * @param {string} Bucket - The name of the S3 bucket
+   * @param {string} Key - The key of the object to retrieve
+   * @param {string} [ResponseCacheControl] - Optional cache control header
+   * @returns {Promise<string>} The object as text
+   */
   getObjectText = async (
     Bucket: string,
     Key: string,
     ResponseCacheControl?: string,
   ) => (await getObject(Bucket, Key, ResponseCacheControl)).text(),
+  /**
+   * Checks if an S3 bucket exists
+   *
+   * @param {string} Bucket - The name of the S3 bucket to check
+   * @param {string | undefined} pin - Optional PIN for authentication
+   * @returns {Promise<void>} A promise that resolves when the check is complete
+   */
   headBucket = async (Bucket: string, pin: string | undefined) => {
     let { accessKeyId, endpoint, region, secretAccessKey } =
       credential.value[Bucket] ?? {};
@@ -98,6 +145,15 @@ const deleteObject = async (Bucket: string, Key: string) => {
       throw new Error(message);
     }
   },
+  /**
+   * Checks if an object exists in an S3 bucket
+   *
+   * @param {string} Bucket - The name of the S3 bucket
+   * @param {string} Key - The key of the object to check
+   * @param {string} [ResponseCacheControl] - Optional cache control header
+   * @returns {Promise<HeadObjectCommandOutput | undefined>} The output of the
+   *   head object command or undefined
+   */
   headObject = async (
     Bucket: string,
     Key: string,
@@ -106,6 +162,15 @@ const deleteObject = async (Bucket: string, Key: string) => {
     s3Client?.send(
       new HeadObjectCommand({ Bucket, Key, ResponseCacheControl }),
     ),
+  /**
+   * Puts an object into an S3 bucket
+   *
+   * @param {string} Bucket - The name of the S3 bucket
+   * @param {string} Key - The key to store the object at
+   * @param {StreamingBlobPayloadInputTypes} body - The content of the object
+   * @param {string} ContentType - The content type of the object
+   * @returns {Promise<void>} A promise that resolves when the object is stored
+   */
   putObject = async (
     Bucket: string,
     Key: string,
