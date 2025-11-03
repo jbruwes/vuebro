@@ -62,9 +62,19 @@ onMounted(async () => {
         completion = registerCompletion(monaco, editor, {
           filename: path,
           language: (await model).getLanguageId(),
+          /**
+           * Handles errors from the completion service
+           */
           onError: () => {
             // console.error(error);
           },
+          /**
+           * Handles the request for code completion
+           *
+           * @param {{ body: object }} root0 - The request object
+           * @param {object} root0.body - The request body
+           * @returns {Promise<object>} - The completion response
+           */
           requestHandler: ({ body }) => copilot.complete({ body }),
           technologies,
         });
@@ -82,6 +92,13 @@ onMounted(async () => {
       const { _theme: t } = themeService;
       if (t) {
         t.semanticHighlighting = true;
+        /**
+         * Gets the token style metadata for syntax highlighting
+         *
+         * @param {string} type - The token type
+         * @param {string[]} modifiers - The token modifiers
+         * @returns {object} - The token style metadata
+         */
         t.getTokenStyleMetadata = (type: string, modifiers: string[]) => {
           let foreground = 0;
           switch (type) {
@@ -113,6 +130,11 @@ onBeforeUnmount(() => {
 });
 
 defineExpose({
+  /**
+   * Gets the currently selected text in the editor
+   *
+   * @returns {Promise<string | null>} The selected text or null if no selection
+   */
   getSelection: async () => {
     const selection = editor?.getSelection() ?? null;
     const value =
