@@ -45,9 +45,21 @@ const error = ref(false),
   payload = computed(() => fieldValues.value.filter(Boolean).join("")),
   selected = ref(0);
 
+/**
+ * Focuses on the field at the given index
+ *
+ * @param {number} index - The index of the field to focus on
+ */
 const focus = (index: number) => {
     if (index >= 0 && index < length.value) selected.value = index;
   },
+  /**
+   * Updates the reference to a field element at a specific index
+   *
+   * @param {ComponentPublicInstance | Element | null} element - The field
+   *   element to reference
+   * @param {number} index - The index at which to store the reference
+   */
   updateFieldRef = (
     element: ComponentPublicInstance | Element | null,
     index: number,
