@@ -226,6 +226,11 @@ const definitions = {
 };
 
 const emit = defineEmits(["update:modelValue"]),
+  /**
+   * Inserts an image into the editor
+   *
+   * @param {File} file - The image file to be inserted
+   */
   insertImage = (file: File) => {
     const message = t(
         "The graphic file type is not suitable for use on the web",
@@ -248,9 +253,20 @@ const emit = defineEmits(["update:modelValue"]),
       );
     } else $q.notify({ message });
   },
+  /**
+   * Handles context menu events
+   *
+   * @param {Event} event - The context menu event
+   */
   onContextmenu = (event: Event) => {
     event.stopPropagation();
   },
+  /**
+   * Handles mouseover events to show element info in tooltip
+   *
+   * @param {Event} event - The mouseover event containing currentTarget and
+   *   target
+   */
   onMouseover = ({ currentTarget, target: element }: Event) => {
     if (
       blocks.value &&
@@ -269,6 +285,9 @@ const emit = defineEmits(["update:modelValue"]),
       target.value = element;
     } else target.value = false;
   },
+  /**
+   * Opens the class dialog to edit element classes
+   */
   openClassDialog = () => {
     if (typeof srcElement.value !== "boolean") {
       const { classList = [] } = srcElement.value;
@@ -289,6 +308,11 @@ const emit = defineEmits(["update:modelValue"]),
       });
     }
   },
+  /**
+   * Handles paste events, including drag-and-drop of files
+   *
+   * @param {ClipboardEvent | DragEvent} evt - The paste or drag event
+   */
   paste = (evt: ClipboardEvent | DragEvent) => {
     const { files = [] } =
       (evt as DragEvent).dataTransfer ??
