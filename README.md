@@ -5,6 +5,7 @@
 VueBro is an open-source and free web editor for creating websites using Vue.js technology. It allows users to create static websites with Vue single-file components (SFCs) without installing or setting up a development environment like Node.js or Vite. The application runs directly in the browser with no need for server-side rendering.
 
 ## :globe_with_meridians: Project Website
+
 [https://vuebro.github.io](https://vuebro.github.io)
 
 ## :rocket: Key Features
@@ -51,18 +52,21 @@ Or access the web application at [vuebro.github.io/vuebro](https://vuebro.github
 ## :computer: Development Setup
 
 ### Prerequisites
+
 - Node.js (latest LTS version recommended)
 - npm package manager
 
 ### Getting Started
 
 1. Clone the repository:
+
    ```bash
    git clone https://github.com/vuebro/vuebro.git
    cd vuebro
    ```
 
 2. Install dependencies:
+
    ```bash
    npm install
    ```
@@ -83,11 +87,13 @@ npm run dev:electron
 ### Building for Production
 
 To build for web:
+
 ```bash
 npm run build
 ```
 
 To build for desktop:
+
 ```bash
 npm run build:electron
 ```
@@ -166,7 +172,7 @@ We welcome contributions from the community! Here's how you can help:
 
 This project is licensed under the AGPL License - see the [LICENSE](LICENSE) file for details.
 
-> [!NOTE] <!-- eslint-disable-line -- This should be fixed in https://github.com/eslint/markdown/issues/294 -->
+> [!NOTE]
 >
 > <img src="https://vuebro.github.io/images/drakkar.svg" alt="drakkar" width="250"/>
 >
