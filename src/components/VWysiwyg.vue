@@ -50,6 +50,7 @@ form.full-width.col.column(
         q-item-section {{ t("Edit classes") }}
 </template>
 <script setup lang="ts">
+import type { TFonts } from "@vuebro/shared";
 import type {
   QEditor,
   QEditorCommand,
@@ -60,7 +61,7 @@ import type {
 
 import initUnocssRuntime from "@unocss/runtime";
 import presets from "@vuebro/configs/uno/presets";
-import { fonts as Fonts, getFontsObjectFromArray } from "@vuebro/shared";
+import { fonts as Fonts } from "@vuebro/shared";
 import { useFileDialog } from "@vueuse/core";
 import mimes from "assets/mimes.json";
 import VChipsInputDialog from "components/dialogs/VChipsInputDialog.vue";
@@ -83,8 +84,20 @@ import { useI18n } from "vue-i18n";
 
 let rootElement: () => Element | undefined;
 
+/**
+ * Converts fonts array to an object mapping with underscored keys
+ *
+ * @param {TFonts} fonts - The array of font names to convert
+ * @returns {Record<string, string>} An object mapping with underscored keys
+ */
+const getFontsObjectFromArray = (fonts: TFonts) =>
+  Object.fromEntries(
+    fonts.map((value) => [value.toLowerCase().replace(/ /g, "_"), value]),
+  );
+
 const { files, open } = useFileDialog({ accept, reset }),
   { t } = useI18n();
+
 const $q = useQuasar(),
   blocks = ref(false),
   editor = ref<QEditor>(),
